@@ -6,6 +6,7 @@
 # Wireframe y caso de uso
 
 # Backlog de iteraciones
+<!-- Esto hay que modificar -->
 Implementaremos las siguientes Historias de Usuario:
 - Historia de Usuario 1
 - Historia de Usuario 2
@@ -13,6 +14,7 @@ Implementaremos las siguientes Historias de Usuario:
 - Historia de Usuario 4
 
 # Tareas
+<!-- Esto hay que modificar -->
 ## Historia de Usuario 1
 ### Tareas tentativas:
 - Diseñar el modelo `Cliente` con atributos: id, nombre/razón social, CUIT, condición fiscal, domicilio, email, teléfono.
