@@ -100,35 +100,41 @@ classDiagram
   4. Sistema actualiza lista de servicios disponibles  
 - **Resultado esperado:** Servicios disponibles reflejan los cambios y pueden ser seleccionados en facturación
 
-### Caso de uso 3: Generar Factura Individual
-- **Actor:** Usuario administrativo  
-- **Flujo principal:**  
-  1. Accede a pantalla de Facturación  
-  2. Selecciona cliente  
-  3. Selecciona uno o más servicios  
-  4. Sistema calcula automáticamente importe neto, IVA y total  
-  5. Usuario confirma factura  
-- **Resultado esperado:** Factura generada con número único, asociada al cliente y servicios
+## Caso de uso 3: Asignar servicios a clientes
+
+**Actor:** Usuario administrativo
+
+**Flujo principal:**
+1. El usuario accede a la pantalla de Asignar Servicios a Clientes  
+2. Selecciona un cliente de la lista.  
+3. El sistema muestra los servicios disponibles.  
+4. El usuario selecciona uno o más servicios que quiere asignar al cliente.  
+5. El usuario confirma la operación.  
+6. El sistema guarda la relación cliente-servicio en la base de datos (`ClienteServicio`) con información opcional como cantidad, fechas de vigencia o frecuencia. 
+7. El sistema muestra un mensaje de éxito y actualiza la pantalla del cliente con los servicios asignados.
+**Resultado esperado:**  
+- El cliente queda asociado a los servicios seleccionados.  
+- Esta información se utilizará posteriormente para facturación individual o masiva.
 
 
 # Backlog de iteración 1
 
 ## Historias de usuario seleccionadas
 
-### Historia de Usuario 1: Gestión de Clientes
-> Como usuario del sistema, quiero poder registrar, modificar y eliminar clientes con su condición fiscal para mantener actualizada la base de clientes.
+### Gestión de Clientes
+> Como usuario del sistema, quiero poder registrar, modificar y eliminar clientes con su condición fiscal para mantener actualizados los datos de los clientes.
 
-### Historia de Usuario 2: Gestión de Servicios
+### Gestión de Servicios
 > Como usuario del sistema, quiero registrar y administrar los servicios ofrecidos por la empresa con su precio base y alícuota de IVA, para poder facturarlos correctamente.
 
-### Historia de Usuario 3: Facturación Individual
-> Como usuario del sistema, quiero generar facturas individuales asociadas a un cliente y servicios seleccionados, de manera que el sistema calcule el IVA y el total automáticamente.
+### Asignación de Servicios a Clientes
+> Como usuario del sistema, quiero asignar servicios a clientes para posteriormente poder realizar su facturación.
 
 ---
 
 # Tareas
 
-## Historia de Usuario 1
+## Gestión de Clientes
 ### Tareas tentativas:
 - [ ] Diseñar el modelo `Cliente` con atributos: id, nombre/razón social, CUIT, condición fiscal, domicilio, email, teléfono.
 - [ ] Crear entidad JPA `Cliente` con Lombok.
@@ -140,7 +146,7 @@ classDiagram
 
 ---
 
-## Historia de Usuario 2
+## Gestión de Servicios
 ### Tareas tentativas:
 - [ ] Diseñar el modelo `Servicio` con atributos: id, nombre, descripción, precio base, alícuota IVA.
 - [ ] Crear entidad JPA `Servicio` con Lombok.
@@ -152,14 +158,14 @@ classDiagram
 
 ---
 
-## Historia de Usuario 3
+## Asignación de Servicios a Clientes
 ### Tareas tentativas:
-- [ ] Diseñar el modelo `Factura` con atributos: id, fechaEmision, cliente, listaServicios, importeNeto, IVA, total.
-- [ ] Crear entidad JPA `Factura` con relaciones a `Cliente` y `Servicio`.
-- [ ] Implementar lógica en `ServicioFactura` para:
-  - Calcular IVA según condición fiscal del cliente.
-  - Calcular total de factura.
-  - Generar factura con número único.
-- [ ] Crear controlador `ControladorFactura`.
-- [ ] Probar generación de factura individual desde Postman.
-- [ ] Validar consistencia de datos (cliente existente, servicios válidos, totales correctos).
+- [ ] Diseñar el modelo `ClienteServicio` con atributos: id, cliente, servicio, cantidadOpcional, fechaVigenciaInicio, fechaVigenciaFin.
+- [ ] Crear entidad JPA `ClienteServicio` con relaciones a `Cliente` y `Servicio`.
+- [ ] Implementar servicio `ServicioClienteServicio` para:
+  - Asignar uno o más servicios a un cliente.
+  - Registrar cantidad opcional y fechas de vigencia si corresponde.
+  - Validar que el cliente y los servicios existen.
+- [ ] Crear controlador `ControladorClienteServicio` para la interfaz de asignación.
+- [ ] Probar asignación de servicios a clientes desde Postman o interfaz de prueba.
+- [ ] Validar consistencia de datos (cliente existente, servicios válidos, relación correcta).
