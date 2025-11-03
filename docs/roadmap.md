@@ -13,9 +13,5 @@ Plan iterativo de historias de Usuario separados por iteración
 | 8  | HU-07 Facturación Masiva | Media     | Iteración 2     |
 | 9  | HU-08 Facturación Individual | Media      | Iteración 2     |
 | 10  | HU-09 Anulación de facturas | Baja      | Iteración 2     |
-| 11  | HU-10 Ver historial de facturaciones masivas | Baja      | Iteración 2     |
-| 12  | HU-12 Ver Estado de Cuenta de un cliente | Baja      | Iteración 2     |
-| 13  | HU-13 Registrar Pago Total | Alta      | Iteración 2     |
-| 14  | HU-14 Registrar Pago Parcial | Alta      | Iteración 2     |
-| 15  | HU-15 Emitir Comprobantes de Pago | Alta     | Iteración 2     |
-
+| 11  | HU-13 Registrar Pago Total | Alta      | Iteración 2     |
+| 12  | HU-14 Registrar Pago Parcial | Alta      | Iteración 2     |
