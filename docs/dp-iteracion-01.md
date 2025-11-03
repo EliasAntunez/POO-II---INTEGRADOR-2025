@@ -5,6 +5,7 @@
 
  ```mermaid
 classDiagram
+    %% Clases
     class Cliente {
         +Long id
         +String nombreRazonSocial
@@ -24,6 +25,13 @@ classDiagram
         +calcularPrecioConIVA()
     }
 
+    class ClienteServicio {
+        +Long id
+        +int cantidadOpcional
+        +LocalDate fechaVigenciaInicio
+        +LocalDate fechaVigenciaFin
+    }
+
     class Factura {
         +Long id
         +LocalDate fechaEmision
@@ -32,14 +40,24 @@ classDiagram
         +BigDecimal total
         +calcularIVA()
         +calcularTotal()
-        +agregarServicio()
+        +agregarDetalle(DetalleFactura)
+    }
+
+    class DetalleFactura {
+        +Long id
+        +int cantidad
+        +BigDecimal precioUnitario
+        +BigDecimal subtotal
+        +calcularSubtotal()
     }
 
     %% Relaciones
-    Cliente "1" --> "0..*" Factura : emite
-    Factura "1" --> "1" Cliente : pertenece a
-    Factura "1" --> "1..*" Servicio : incluye
-    Servicio "0..*" --> "0..*" Factura : facturado en
+    Cliente "1" -- "0..*" Factura
+    Factura "1" -- "0..*" DetalleFactura
+    Servicio "1" -- "0..*" DetalleFactura
+
+    Cliente "1" -- "0..*" ClienteServicio
+    Servicio "1" -- "0..*" ClienteServicio
 ```
 
 # Wireframe y flujo de interacción
@@ -112,36 +130,36 @@ classDiagram
 
 ## Historia de Usuario 1
 ### Tareas tentativas:
-- [] Diseñar el modelo `Cliente` con atributos: id, nombre/razón social, CUIT, condición fiscal, domicilio, email, teléfono.
-- [] Crear entidad JPA `Cliente` con Lombok.
-- [] Crear repositorio `RepositorioCliente`.
-- [] Implementar servicio `ServicioCliente` para alta, baja y modificación de clientes.
-- [] Crear controlador `ControladorCliente`.
-- [] Implementar validaciones: CUIT válido, campos obligatorios, condición fiscal correcta.
-- [] Probar endpoints con Postman.
+- [ ] Diseñar el modelo `Cliente` con atributos: id, nombre/razón social, CUIT, condición fiscal, domicilio, email, teléfono.
+- [ ] Crear entidad JPA `Cliente` con Lombok.
+- [ ] Crear repositorio `RepositorioCliente`.
+- [ ] Implementar servicio `ServicioCliente` para alta, baja y modificación de clientes.
+- [ ] Crear controlador `ControladorCliente`.
+- [ ] Implementar validaciones: CUIT válido, campos obligatorios, condición fiscal correcta.
+- [ ] Probar endpoints con Postman.
 
 ---
 
 ## Historia de Usuario 2
 ### Tareas tentativas:
-- [] Diseñar el modelo `Servicio` con atributos: id, nombre, descripción, precio base, alícuota IVA.
-- [] Crear entidad JPA `Servicio` con Lombok.
-- [] Crear repositorio `RepositorioServicio`.
-- [] Implementar servicio `ServicioServicio` para gestionar servicios.
-- [] Crear controlador `ControladorServicio`.
-- [] Implementar validaciones: precio positivo, nombre no vacío.
-- [] Probar endpoints con Postman.
+- [ ] Diseñar el modelo `Servicio` con atributos: id, nombre, descripción, precio base, alícuota IVA.
+- [ ] Crear entidad JPA `Servicio` con Lombok.
+- [ ] Crear repositorio `RepositorioServicio`.
+- [ ] Implementar servicio `ServicioServicio` para gestionar servicios.
+- [ ] Crear controlador `ControladorServicio`.
+- [ ] Implementar validaciones: precio positivo, nombre no vacío.
+- [ ] Probar endpoints con Postman.
 
 ---
 
 ## Historia de Usuario 3
 ### Tareas tentativas:
-- [] Diseñar el modelo `Factura` con atributos: id, fechaEmision, cliente, listaServicios, importeNeto, IVA, total.
-- [] Crear entidad JPA `Factura` con relaciones a `Cliente` y `Servicio`.
-- [] Implementar lógica en `ServicioFactura` para:
+- [ ] Diseñar el modelo `Factura` con atributos: id, fechaEmision, cliente, listaServicios, importeNeto, IVA, total.
+- [ ] Crear entidad JPA `Factura` con relaciones a `Cliente` y `Servicio`.
+- [ ] Implementar lógica en `ServicioFactura` para:
   - Calcular IVA según condición fiscal del cliente.
   - Calcular total de factura.
   - Generar factura con número único.
-- [] Crear controlador `ControladorFactura`.
-- [] Probar generación de factura individual desde Postman.
-- [] Validar consistencia de datos (cliente existente, servicios válidos, totales correctos).
+- [ ] Crear controlador `ControladorFactura`.
+- [ ] Probar generación de factura individual desde Postman.
+- [ ] Validar consistencia de datos (cliente existente, servicios válidos, totales correctos).
