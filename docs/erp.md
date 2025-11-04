@@ -3,6 +3,7 @@
 
 ## HU-01 Alta de Cliente
 **Descripción:** Como **Administrador** quiero **registrar nuevos clientes** para **tener sus datos en el sistema y el cliente pueda acceder a los mismos.**
+
 **Criterios de Aceptación:**
 - Datos necesarios y obligatorios para su registro:
     - Razón social/Nombre
@@ -23,6 +24,7 @@
 
 ## HU-02 Modificación de Cliente
 **Descripción:** Como **Administrador** quiero **modificar los datos de clientes** para **tener a los mismos con la información actualizada.**
+
 **Criterios de Aceptación:**
 - Tanto el DNI como el CUIT permanecerán sin modificaciones
 - Si la condición fiscal del cliente cambia, la misma afectará únicamente a transacciones futuras.
@@ -31,6 +33,7 @@
 
 ## HU-03 Baja de Cliente
 **Descripción:** Como **Administrador** quiero **dar de baja a clientes** para **que estos no puedan acceder a su cuenta**
+
 **Criterios de Aceptación:**
 - El sistema debe verificar que no haya transacciones en proceso asociados al cliente a dar de baja.
 - El sistema debe verificar que no haya transacciones en proceso asociados al cliente a dar de baja.
@@ -41,6 +44,7 @@
 
 ## HU-04 Alta de Servicios
 **Descripción:** Como **Administrador** quiero **registrar nuevos servicios** para **tener sus datos en el sistema y el cliente pueda solicitar los mismos.**
+
 **Criterios de Aceptación:**
 - Datos necesarios y obligatorios para su registro:
     - Nombre
@@ -57,12 +61,14 @@
 
 ## HU-05 Modificación de Servicios
 **Descripción:** Como **Administrador** quiero **modificar los datos de un servicio** para **tener a los mismos con información actualizada**
+
 **Criterios de Aceptación:**
 - El sistema debe validar que los campos obligatorios sean validados (no permitir campos vacíos)
 
 
 ## HU-06 Baja de Servicios
 **Descripción:** Como **Administrador** quiero **dar de baja a servicios** para **que estos no estén disponibles para los clientes**
+
 **Criterios de Aceptación:**
 - El sistema debe verificar que no haya transacciones en proceso asociados al servicio a dar de baja.
 - Los servicios dados de baja no deben ser visibles para los clientes.
@@ -74,6 +80,7 @@
 
 ## HU-07 Facturación Masiva
 **Descripción:** Como **Administrador** quiero **realizar una facturación masiva** para **procesar un gran volumen de facturas de forma rápida y simultánea**
+
 **Criterios de Aceptación:**
 - La facturación masiva se realiza a todas aquellas cuentas que figuren como activas.
 - El sistema debe permitir que el administrador ingrese un período (un mes en específico).
@@ -82,21 +89,34 @@
     - Cantidad de facturas
     - Periodo facturado
     - Empleado responsable
+
 **Notas Técnicas:**
 - La facturación masiva queda registrada en log con su fecha y empleado responsable correspondiente.
 
 
 ## HU-08 Facturación Individual
 **Descripción:** Como **Administrador** quiero **emitir una factura** para **documentar una operación de servicio**
+
 **Criterios de Aceptación:**
-- (faltan agregar)
+- El sistema debe permitir al Administrador crear una nueva factura asociada a una operación de servicio existente.
+- La factura debe incluir los datos obligatorios: número de factura, fecha de emisión, datos del cliente, descripción del servicio, monto, impuestos aplicables y total.
+- La numeración de la factura debe ser única y secuencial.
+- No debe ser posible emitir una factura si faltan datos obligatorios (por ejemplo: cliente, monto, descripción del servicio).
+- Si el servicio ya tiene una factura emitida, el sistema debe evitar la duplicación y notificar al usuario.
+- La factura debe poder visualizarse y descargarse en formato PDF.
+- La factura debe poder imprimirse directamente desde el sistema.
+- Cada factura emitida debe quedar registrada en el sistema con fecha, hora y usuario emisor.
 
 **Notas Técnicas:**
-- (faltan agregar)
+- Crear o actualizar entidades Factura y Servicio, con relación uno a uno o uno a muchos según corresponda.
+- Campos sugeridos: id_factura, numero_factura, fecha_emision, id_servicio, cliente, subtotal, impuestos, total, estado.
+- Plantilla de factura personalizable (HTML o template engine).
+- Registrar en logs o base de datos el usuario que emite, fecha y detalles del documento.
 
 
 ## HU-09 Anulación de facturas
 **Descripción:** Como **Administrador** quiero **anular una factura** para **corregir errores, reflejar devoluciones o cancelaciones de servicios**
+
 **Criterios de Aceptación:**
 - Se debe de incluir el motivo y el responsable de la anulación de la factura.
 - No se puede aplicar doble anulación.
@@ -106,8 +126,7 @@
 
 
 ## HU-10 Asignar servicios a clientes
-**Descripción:**  
-Como **Administrador** quiero **asignar un servicio a un cliente** para **registrar la prestación y permitir su futura facturación**
+**Descripción:** Como **Administrador** quiero **asignar un servicio a un cliente** para **registrar la prestación y permitir su futura facturación**
 
 **Criterios de Aceptación:**
 - Debe existir un cliente registrado para asignar el servicio.
@@ -129,8 +148,7 @@ Como **Administrador** quiero **asignar un servicio a un cliente** para **regist
 
 
 ## HU-11 Registrar Pago Total
-**Descripción:**  
-Como **Administrador** quiero **registrar el pago total de una factura** para **tener el estado de la cuenta del cliente actualizado**  
+**Descripción:**Como **Administrador** quiero **registrar el pago total de una factura** para **tener el estado de la cuenta del cliente actualizado*
 
 **Criterios de Aceptación:**
 - El sistema debe permitir seleccionar una factura pendiente de pago.
@@ -156,8 +174,7 @@ Como **Administrador** quiero **registrar el pago total de una factura** para **
 
 
 ## HU-12 Registrar Pago Parcial
-**Descripción:**  
-Como **Administrador** quiero **registrar el pago parcial de una factura** para **saber el monto pendiente a pagar y mantener el estado de la cuenta del cliente actualizado**
+**Descripción:**Como **Administrador** quiero **registrar el pago parcial de una factura** para **saber el monto pendiente a pagar y mantener el estado de la cuenta del cliente actualizado**
 
 **Criterios de Aceptación:**
 - El sistema debe permitir seleccionar una factura con saldo pendiente.

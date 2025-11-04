@@ -64,7 +64,7 @@ classDiagram
 
 ## Wireframe conceptual
 
-> Los wireframes conceptuales se encuentran en `img/wireframe-iteracion1.png`.
+> ![Dashboard - Inicio](imgs/wireframe_dashboard.png)
 
 ---
 
@@ -101,9 +101,7 @@ classDiagram
 - **Resultado esperado:** Servicios disponibles reflejan los cambios y pueden ser seleccionados en facturación
 
 ## Caso de uso 3: Asignar servicios a clientes
-
 **Actor:** Usuario administrativo
-
 **Flujo principal:**
 1. El usuario accede a la pantalla de Asignar Servicios a Clientes  
 2. Selecciona un cliente de la lista.  
