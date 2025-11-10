@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modificar Cliente</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+
+<th:block th:fragment="content">
+
+    <div class="container mt-4 mb-5" style="max-width: 900px;">
+        
+        <div class="card shadow-sm border-0">
+            
+            <div class="card-header text-white" style="background-color: rgb(140, 55, 220);">
+                <h1 class="h4 mb-0 d-flex align-items-center">
+                    <i class="bi bi-pencil-fill me-2"></i>
+                    Modificar Cliente 
+                </h1>
+            </div>
+
+            <form th:action="@{/clientes/modificar}" method="post" th:object="${cliente}" id="formClienteModificar">
+                
+                <div class="card-body p-4">
+
+                    <div th:if="${#fields.hasErrors('*')}" class="alert alert-danger" role="alert">
+                        <strong>Por favor, corrija los siguientes errores:</strong>
+                        <ul>
+                            <li th:each="err : ${#fields.errors('*')}" th:text="${err}"></li>
+                        </ul>
+                    </div>
+                    
+                    <input type="hidden" th:field="*{id}" />
+
+                    <h5 class="mb-3 border-bottom pb-2">Identificación Personal</h5>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="dni" class="form-label">DNI <span class="text-danger">*</span></label>
+                            <input type="text" id="dni" th:field="*{dni}" class="form-control" required pattern="\d{7,8}" maxlength="8" title="DNI debe tener 7 u 8 dígitos numéricos">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" id="nombre" th:field="*{nombre}" class="form-control" required maxlength="100">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="apellido" class="form-label">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" id="apellido" th:field="*{apellido}" class="form-control" required maxlength="100">
+                        </div>
+                        
+                    </div>
+
+                    <h5 class="mt-4 mb-3 border-bottom pb-2">Información de Contacto</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" id="email" th:field="*{email}" class="form-control" required maxlength="255">
+                        </div>
+                         <div class="col-md-6">
+                            <label for="telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                            <input type="text" id="telefono" th:field="*{telefono}" class="form-control" required pattern="^\+?\d{7,15}$" maxlength="15" title="Teléfono debe ser entre 7 y 15 dígitos, puede iniciar con +">
+                        </div>
+                        <div class="col-12">
+                            <label for="direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
+                            <input type="text" id="direccion" th:field="*{direccion}" class="form-control" required maxlength="255">
+                        </div>
+                    </div>
+
+                    <h5 class="mt-4 mb-3 border-bottom pb-2">Información Fiscal</h5>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="razonSocial" class="form-label">Razón Social <span class="text-danger">*</span></label>
+                            <input type="text" id="razonSocial" th:field="*{razonSocial}" class="form-control" required maxlength="255">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="cuit" class="form-label">CUIT <span class="text-danger">*</span></label>
+                            <input type="text" id="cuit" th:field="*{cuit}" class="form-control" required pattern="\d{11}" maxlength="11" title="CUIT debe tener 11 dígitos numéricos">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="condicionFiscal" class="form-label">Condición Fiscal <span class="text-danger">*</span></label>
+                            <select id="condicionFiscal" th:field="*{condicionFiscal}" class="form-select" required>
+                                <option value="" disabled th:if="${cliente.condicionFiscal == null}">-- Seleccione --</option>
+                                <option th:each="c : ${T(com.example.facturacion.modelo.enums.CondicionFiscal).values()}"
+                                        th:value="${c.name()}" 
+                                        th:text="${c.descripcion}">
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-check form-switch mt-3">
+                                <input class="form-check-input" type="checkbox" id="activo" th:field="*{activo}" />
+                                <label class="form-check-label" for="activo">Cliente Activo</label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <div class="card-footer bg-light text-end py-3">
+                    <a th:href="@{/clientes/listar}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle-fill"></i> Guardar Cambios
+                    </button>
+                </div>
+
+            </form> </div> </div>
+
+            <!-- Input helpers moved to base layout (layouts/base.html) -->
+</th:block>
+
+</body>
+</html>

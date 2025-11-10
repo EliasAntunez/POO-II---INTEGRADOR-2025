@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <title th:replace="${title}">Facturación</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        /* --- Estilos de base.html --- */
+        :root{
+            --nav-bg:#7b0293; 
+            --accent:#ffffff;  
+            --text:#000000;
+            --muted:rgba(255, 255, 255, 0.75);
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        
+        body{
+            height:100%;
+            font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+            background:var(--bg);
+            color:var(--text);
+            min-height: 100vh;
+            overflow-y: scroll; 
+        }
+
+        .navbar{
+            display:flex;
+            align-items:center;
+            gap:1rem;
+            padding:0.6rem 1rem;
+            background:var(--nav-bg);
+            color:#ffffff;
+            position:sticky;
+            top:0;
+            z-index:1030; /* Elevado para estar sobre el sidebar */
+            box-shadow:0 1px 8px rgba(255, 255, 255, 0.25);
+        }
+        .brand {
+            color: inherit;
+            text-decoration: none;
+            margin-right: 1rem; /* Espacio entre el brand y el nombre */
+        }
+        
+        /* ---  Estilo para el botón del Sidebar --- */
+        .sidebar-toggle {
+            color: var(--muted);
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            padding: 0 0.5rem;
+            margin-left: -0.5rem; /* Lo acerca al borde */
+        }
+        .sidebar-toggle:hover {
+            color: var(--text);
+        }
+        /* --- Fin nuevo estilo --- */
+
+
+        /* --- Estilos del Layout Principal  --- */
+        #wrapper {
+            /* Usamos 'd-flex' para el layout principal */
+            display: flex;
+            position: relative;
+        }
+
+        .sidebar { 
+            min-width: 220px; 
+            max-width: 220px;
+            /* La altura ahora es 'min-height' para ajustarse al contenido si es necesario */
+            min-height: calc(100vh - 56px); /* Altura total menos el navbar */
+            position: sticky; /* Hacemos que el sidebar se quede fijo al hacer scroll */
+            top: 56px; /* 56px es la altura estándar de un navbar */
+            
+            /* ---  Animación de colapso --- */
+            margin-left: 0;
+            transition: margin-left 0.3s ease-in-out;
+        }
+        
+        /* ---  Estado colapsado --- */
+        #wrapper.sidebar-toggled .sidebar {
+            margin-left: -220px; /* Oculta el sidebar moviéndolo a la izquierda */
+        }
+
+        .content { 
+            flex: 1; 
+            overflow-y: auto;
+            min-height: calc(100vh - 56px);
+            background-color: #f8f9fa;
+        }
+        /* --- (NUEVO) Estilos para el texto del Sidebar --- */
+        
+        /* Pone el texto de "Administrador" en negro */
+        .sidebar > a.text-decoration-none {
+            color: var(--text); /* Usa la variable de texto negro */
+        }
+        
+        /* Pone los enlaces "Inicio" y "Clientes" en negro */
+        .sidebar .nav-link {
+            color: var(--text);
+        }
+
+        /* (Recomendado) Hace que el enlace ACTIVO use tu color violeta */
+        .sidebar .nav-link.active {
+            background-color: var(--nav-bg); /* Tu color violeta */
+            color: #ffffff; /* Texto blanco */
+        }
+
+        /* (Recomendado) Un sutil hover para los enlaces */
+        .sidebar .nav-link:not(.active):hover {
+            background-color: #e9ecef; /* Un gris claro */
+        }
+        
+        .table-responsive { max-height: 360px; overflow: auto; }
+        
+        /* ---  Lógica de Móvil --- */
+        @media (max-width: 768px) {
+            /* En móvil, el sidebar empieza oculto */
+            .sidebar { 
+                margin-left: -220px;
+                /* ---  Lo hacemos 'fixed' para que flote sobre el contenido --- */
+                position: fixed;
+                top: 56px;
+                height: calc(100vh - 56px);
+                z-index: 1020; /* Debajo del navbar pero sobre el contenido */
+            }
+            
+            /* En móvil, al hacer toggle, el sidebar aparece (se mueve a 0) */
+            #wrapper.sidebar-toggled .sidebar {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar" role="banner">
+        
+        <button class="sidebar-toggle" id="sidebarToggle" title="Abrir/Cerrar menú">
+            <i class="bi bi-list"></i>
+        </button>
+        
+        <a class="brand" href="/" aria-label="Inicio">
+            <span class="name">FactuApp</span>
+        </a>
+        
+        </header>
+
+    <div class="d-flex" id="wrapper">
+    
+        <nav class="sidebar bg-light border-end p-3 d-flex flex-column">
+            <a class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none" href="#" th:href="@{/}">
+                <span class="fs-4"><i class="bi bi-speedometer2"></i> Administrador</span>
+            </a>
+            <hr>
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active=='dashboard'} ? 'active' : ''" th:href="@{/dashboard}">
+                        <i class="bi bi-house"></i> Inicio
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link" th:classappend="${active=='clientes'} ? 'active' : ''" th:href="@{/clientes/listar}">
+                        <i class="bi bi-people"></i> Clientes
+                    </a>
+                </li>
+            </ul>
+            <hr>
+        </nav>
+
+        <main role="main" class="content p-4">
+            <div th:replace="${content}">
+                <p>Contenido por defecto</p>
+            </div>
+        </main>
+        
+    </div> 
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+
+    <script>
+        (function(){
+            var btn = document.getElementById('sidebarToggle');
+            var wrapper = document.getElementById('wrapper');
+            
+            if(!btn || !wrapper) return;
+
+            // Al cargar la página, colapsar en móvil por defecto
+            if (window.innerWidth <= 768) {
+                // No es necesario, el CSS ya lo hace
+                // wrapper.classList.remove('sidebar-toggled');
+            } else {
+                // En escritorio, empezar visible
+                wrapper.classList.add('sidebar-toggled');
+            }
+            
+            btn.addEventListener('click', function(){
+                wrapper.classList.toggle('sidebar-toggled');
+            });
+        })();
+    </script>
+    
+    <script>
+        (function(){
+            function soloNumeros(e){
+                if ([46,8,9,27,13].indexOf(e.keyCode)!==-1 || ((e.keyCode==65||e.keyCode==67||e.keyCode==88)&&(e.ctrlKey===true||e.metaKey===true)) || (e.keyCode>=35 && e.keyCode<=39)) return;
+                if ((e.shiftKey || (e.keyCode<48 || e.keyCode>57)) && (e.keyCode<96 || e.keyCode>105)) { e.preventDefault(); }
+            }
+            function soloNumerosYSignoMas(e){ if(e.key==='+' && e.target.value.length===0) return; soloNumeros(e); }
+            document.addEventListener('DOMContentLoaded', function(){
+                var dni = document.getElementById('dni');
+                var cuit = document.getElementById('cuit');
+                var tel = document.getElementById('telefono');
+                if(dni) dni.addEventListener('keydown', soloNumeros);
+                if(cuit) cuit.addEventListener('keydown', soloNumeros);
+                if(tel) tel.addEventListener('keydown', soloNumerosYSignoMas);
+            });
+            
+            window.soloNumeros = soloNumeros; window.soloNumerosYSignoMas = soloNumerosYSignoMas;
+        })();
+    </script>
+</body>
+</html>

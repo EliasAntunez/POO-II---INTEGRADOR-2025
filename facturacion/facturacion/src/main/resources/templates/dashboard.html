@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+
+<head>
+    <title>Dashboard - Administrador</title>
+</head>
+
+<body>
+
+<th:block th:fragment="content">
+
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Panel de control</h1>
+    </header>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header">
+                    <strong>Acciones rápidas</strong>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <a th:href="@{/clientes/crear}" class="list-group-item list-group-item-action text-dark text-decoration-none">
+                            <i class="bi bi-person-plus me-2 text-primary"></i>
+                            Nuevo cliente
+                        </a>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        </div> </th:block>
+
+</body>
+</html>
