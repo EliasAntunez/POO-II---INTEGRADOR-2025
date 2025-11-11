@@ -15,7 +15,6 @@
     - Estado de la cuenta (Activa/Inactiva)
     - DNI
 - El sistema debe validar que los campos obligatorios sean validados antes del registro (no permitir campos vacíos)
-- El sistema debe validar que los campos obligatorios sean validados antes del registro (no permitir campos vacíos)
 
 **Notas Técnicas:**
 - El sistema debe verificar que el DNI y/o el CUIT no se repitan.
@@ -36,7 +35,6 @@
 
 **Criterios de Aceptación:**
 - El sistema debe verificar que no haya transacciones en proceso asociados al cliente a dar de baja.
-- El sistema debe verificar que no haya transacciones en proceso asociados al cliente a dar de baja.
 
 **Notas Técnicas:**
 - La baja es lógica, no física (cambio de estado: de Activa a Inactiva)
@@ -53,11 +51,10 @@
     - Tipo de Alícuota (27%, 21%, 10.5%, 3.5%)
     - Estado (Activo/Inactivo)
 - El sistema debe validar que los campos obligatorios sean validados antes del registro (no permitir campos vacíos)
-- El sistema debe validar que los campos obligatorios sean validados antes del registro (no permitir campos vacíos)
 
 **Notas Técnicas:**
-- La baja es lógica, no física (cambio de estado: de Activa a Inactiva)
-
+- El sistema debe verificar que el nombre no se repita.
+- El sistema debe validar los tipos de datos (texto, número, etc)
 
 ## HU-05 Modificación de Servicios
 **Descripción:** Como **Administrador** quiero **modificar los datos de un servicio** para **tener a los mismos con información actualizada**
@@ -71,7 +68,6 @@
 
 **Criterios de Aceptación:**
 - El sistema debe verificar que no haya transacciones en proceso asociados al servicio a dar de baja.
-- Los servicios dados de baja no deben ser visibles para los clientes.
 - Los servicios dados de baja no deben ser visibles para los clientes.
 
 **Notas Técnicas:**
@@ -144,7 +140,7 @@
 - Validar existencia del cliente y del servicio antes de asignar.
 - Tabla relacional: `cliente_servicio` (id, id_cliente, id_servicio, fecha_asignacion, estado, usuario_registro).
 - Manejar estados del servicio asignado (ej. pendiente de facturación, facturado).
-- En caso de error, retornar mensajes claros.  
+- En caso de error, retornar mensajes claros.
 
 
 ## HU-11 Registrar Pago Total

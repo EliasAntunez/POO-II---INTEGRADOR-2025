@@ -12,8 +12,8 @@
     <style>
         /* --- Estilos de base.html --- */
         :root{
-            --nav-bg:#7b0293; 
-            --accent:#ffffff;  
+            --nav-bg:#7b0293;
+            --accent:#ffffff;
             --text:#000000;
             --muted:rgba(255, 255, 255, 0.75);
         }
@@ -25,7 +25,7 @@
             background:var(--bg);
             color:var(--text);
             min-height: 100vh;
-            overflow-y: scroll; 
+            overflow-y: scroll;
         }
 
         .navbar{
@@ -68,8 +68,8 @@
             position: relative;
         }
 
-        .sidebar { 
-            min-width: 220px; 
+        .sidebar {
+            min-width: 220px;
             max-width: 220px;
             /* La altura ahora es 'min-height' para ajustarse al contenido si es necesario */
             min-height: calc(100vh - 56px); /* Altura total menos el navbar */
@@ -86,8 +86,8 @@
             margin-left: -220px; /* Oculta el sidebar moviéndolo a la izquierda */
         }
 
-        .content { 
-            flex: 1; 
+        .content {
+            flex: 1;
             overflow-y: auto;
             min-height: calc(100vh - 56px);
             background-color: #f8f9fa;
@@ -120,7 +120,7 @@
         /* ---  Lógica de Móvil --- */
         @media (max-width: 768px) {
             /* En móvil, el sidebar empieza oculto */
-            .sidebar { 
+            .sidebar {
                 margin-left: -220px;
                 /* ---  Lo hacemos 'fixed' para que flote sobre el contenido --- */
                 position: fixed;
@@ -168,6 +168,11 @@
                         <i class="bi bi-people"></i> Clientes
                     </a>
                 </li>
+                <li>
+                    <a class="nav-link" th:classappend="${active=='servicios'} ? 'active' : ''" th:href="@{/servicios/listar}">
+                        <i class="bi bi-briefcase"></i> Servicios
+                    </a>
+                </li>
             </ul>
             <hr>
         </nav>
@@ -178,12 +183,13 @@
             </div>
         </main>
         
-    </div> 
+    </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
 
     <script>
+        //--- Lógica de Toggle del Sidebar ---//
         (function(){
             var btn = document.getElementById('sidebarToggle');
             var wrapper = document.getElementById('wrapper');
@@ -206,6 +212,7 @@
     </script>
     
     <script>
+        //--- Lógica para permitir solo números en ciertos campos ---//
         (function(){
             function soloNumeros(e){
                 if ([46,8,9,27,13].indexOf(e.keyCode)!==-1 || ((e.keyCode==65||e.keyCode==67||e.keyCode==88)&&(e.ctrlKey===true||e.metaKey===true)) || (e.keyCode>=35 && e.keyCode<=39)) return;
