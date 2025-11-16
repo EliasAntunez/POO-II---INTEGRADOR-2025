@@ -1,11 +1,13 @@
 package com.example.facturacion.repositorio;
-import org.springframework.stereotype.Repository;
-import org.springframework.data.jpa.repository.JpaRepository;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import com.example.facturacion.modelo.Cliente;
 
-/** 
+/**
  * Repositorio para la entidad Cliente
  * Proporciona métodos para operaciones CRUD y consultas personalizadas.
 */
