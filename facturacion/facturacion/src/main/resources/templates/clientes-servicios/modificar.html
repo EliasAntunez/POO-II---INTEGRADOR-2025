@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Modificar Asignación</title>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    </head>
+
+    <body>
+        <th:block th:fragment="content">
+                <div class="container mt-4 mb-5" style="max-width: 900px;">
+                    
+                    <div class="card shadow-sm border-0">
+                        
+                            <div class="card-header text-white" style="background-color: rgb(140, 55, 220);">
+                                <h1 class="h4 mb-0 d-flex align-items-center">
+                                    <i class="bi bi-pencil-fill me-2"></i>
+                                    Modificar Asignación
+                                </h1>
+                            </div>
+
+                            <form th:action="@{/clientes-servicios/modificar}" method="post" th:object="${clienteServicio}" id="formClienteServicioModificar">
+                                <div class="card-body p-4">
+                                    <input type="hidden" th:field="*{id}" />
+
+                                    <div th:if="${error}" class="mb-3">
+                                        <div class="alert alert-danger" th:text="${error}"></div>
+                                    </div>
+                                    <div th:if="${success}" class="mb-3">
+                                        <div class="alert alert-success" th:text="${success}"></div>
+                                    </div>
+
+                                    <h5 class="mt-4 mb-3 border-bottom pb-2">Asignación</h5>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="clienteId" class="form-label">Cliente <span class="text-danger">*</span></label>
+                                            <select id="clienteId" name="clienteId" class="form-select" required>
+                                                <option value="" disabled>-- Seleccione --</option>
+                                                <option th:each="c : ${clientes}" th:value="${c.id}"
+                                                        th:text="${c.razonSocial + ' - ' + c.nombre + ' ' + c.apellido}"
+                                                        th:selected="${clienteServicio != null and clienteServicio.cliente != null} ? ${c.id} == ${clienteServicio.cliente.id} : false">
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="servicioId" class="form-label">Servicio <span class="text-danger">*</span></label>
+                                            <select id="servicioId" name="servicioId" class="form-select" required>
+                                                <option value="" disabled>-- Seleccione --</option>
+                                                <option th:each="s : ${servicios}" th:value="${s.id}"
+                                                        th:text="${s.nombre}"
+                                                        th:selected="${clienteServicio != null and clienteServicio.servicio != null} ? ${s.id} == ${clienteServicio.servicio.id} : false">
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="fechaAsignacion" class="form-label">Fecha Asignación</label>
+                                            <input type="text" id="fechaAsignacion" class="form-control" th:value="${clienteServicio != null and clienteServicio.fechaAsignacion != null} ? ${clienteServicio.fechaAsignacion} : ''" readonly />
+                                        </div>
+
+                                        <div class="col-12">
+                                            <div class="form-check form-switch mt-3">
+                                                <input class="form-check-input" type="checkbox" id="activo" name="activo" th:checked="${clienteServicio != null} ? ${clienteServicio.activo} : true" />
+                                                <label class="form-check-label" for="activo">Asignación Activa</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card-footer bg-light text-end py-3">
+                                    <a th:href="@{/clientes-servicios/listar}" class="btn btn-outline-secondary me-2">
+                                        <i class="bi bi-x-circle"></i> Cancelar
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle-fill"></i> Guardar Cambios
+                                    </button>
+                                </div>
+                            </form>
+                    </div>
+                </div>
+                        <!-- Input helpers moved to base layout (layouts/base.html) -->
+        </th:block>
+    </body>
+
+</html>
