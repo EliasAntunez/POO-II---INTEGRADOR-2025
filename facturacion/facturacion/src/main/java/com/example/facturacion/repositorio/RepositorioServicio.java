@@ -17,19 +17,29 @@ public interface RepositorioServicio extends JpaRepository<Servicio, Long> {
      * Verifica si existe un servicio con el nombre dado.
      * @param nombre
      */
-    public boolean existsByNombre(String nombre);
+    boolean existsByNombre(String nombre);
+    
     /**
      * Métodos útiles para exclusión por id en actualizaciones
      * @param nombre
      * @param id
      */
-    public boolean existsByNombreAndIdNot(String nombre, Long id);
-    public java.util.List<Servicio> findByActivoTrue();
+    boolean existsByNombreAndIdNot(String nombre, Long id);
+    
+    /**
+     * Obtiene todos los servicios activos.
+     */
+    java.util.List<Servicio> findByActivoTrue();
+    
     /**
      * Obtiene una página de servicios activos.
      * @param pageable información de paginación
      */
-    public Page<Servicio> findByActivoTrue(Pageable pageable);
-
-
+    Page<Servicio> findByActivoTrue(Pageable pageable);
+    
+    /**
+     * Obtiene una página de TODOS los servicios (activos e inactivos).
+     * @param pageable información de paginación
+     */
+    Page<Servicio> findAll(Pageable pageable);
 }
