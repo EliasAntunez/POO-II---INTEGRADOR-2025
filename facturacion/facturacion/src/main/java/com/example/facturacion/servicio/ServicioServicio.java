@@ -104,4 +104,9 @@ public class ServicioServicio {
         }
         
     }
+
+    //OBTENER TODOS LOS SERVICIOS ACTIVOS
+    public List<Servicio> obtenerServiciosActivos() {
+        return repositorioServicio.findByActivoTrue();
+    }
 }

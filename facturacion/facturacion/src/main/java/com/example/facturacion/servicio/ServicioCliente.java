@@ -118,4 +118,9 @@ public class ServicioCliente {
         }
         
     }
+
+    //OBTENER TODOS LOS CLIENTES ACTIVOS
+    public List<Cliente> obtenerClientesActivos() {
+        return repositorioCliente.findByActivoTrue();
+    }
 }
