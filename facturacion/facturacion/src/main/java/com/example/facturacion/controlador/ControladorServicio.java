@@ -90,6 +90,7 @@ public class ControladorServicio {
                                 BindingResult bindingResult, 
                                 Model model, 
                                 RedirectAttributes redirectAttrs) {
+        
         if (bindingResult.hasErrors()) {
             System.out.println("Errores de validación en crear servicio:");
             bindingResult.getAllErrors().forEach(error -> System.out.println(error.toString()));
@@ -101,15 +102,25 @@ public class ControladorServicio {
             servicioServicio.guardarServicio(servicio);
             redirectAttrs.addFlashAttribute("exito", "Servicio creado correctamente.");
             return "redirect:/servicios/listar";
+            
         } catch (IllegalArgumentException ex) {
             String msg = (ex.getMessage() != null) ? ex.getMessage() : "Error de validación de negocio";
             bindingResult.reject("error.servicio", Objects.requireNonNull(msg));
             model.addAttribute("todasLasAlicuotas", Alicuota.values());
             return "servicios/crear";
+            
         } catch (DataIntegrityViolationException ex) {
             Throwable root = ex.getRootCause();
             String rootMsg = (root != null) ? root.getMessage() : ex.getMessage();
             bindingResult.reject("error.servicio", "Error de integridad de datos: " + rootMsg);
+            model.addAttribute("todasLasAlicuotas", Alicuota.values());
+            return "servicios/crear";
+            
+        } catch (Exception ex) {
+            // Manejo de cualquier otra excepción
+            System.err.println("Error inesperado al crear servicio: " + ex.getMessage());
+            ex.printStackTrace();
+            bindingResult.reject("error.servicio", "Error inesperado al crear el servicio: " + ex.getMessage());
             model.addAttribute("todasLasAlicuotas", Alicuota.values());
             return "servicios/crear";
         }
