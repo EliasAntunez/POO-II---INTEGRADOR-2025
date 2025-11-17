@@ -64,7 +64,7 @@ classDiagram
 
 ## Wireframe conceptual
 
-> ![Dashboard - Inicio](imgs/wireframe_dashboard.png)
+> ![Dashboard - Inicio](imgs/wireframe_dashboard-tentativo.png)
 
 ---
 
