@@ -47,7 +47,7 @@ public class Servicio {
     private Double precio;
     
     @NotNull(message = "La alícuota es obligatoria")
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "alicuota", nullable = false)
     private Alicuota alicuota;
     
