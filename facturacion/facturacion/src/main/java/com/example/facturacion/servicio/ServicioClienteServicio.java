@@ -32,6 +32,18 @@ public class ServicioClienteServicio {
         return repositorioClienteServicio.findByActivoTrue();
     }
 
+    /**
+     * Obtiene una página de asignaciones cliente-servicio activas.
+     * @param page número de página (base 0)
+     * @param size tamaño de página
+     */
+    public org.springframework.data.domain.Page<ClienteServicio> obtenerClientesServiciosPaginados(int page, int size) {
+        final int safePage = Math.max(0, page);
+        final int safeSize = Math.max(1, size);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(safePage, safeSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+        return repositorioClienteServicio.findByActivoTrue(pageable);
+    }
+
     // Guardar un nuevo cliente-servicio: resolver referencias por id y validar duplicados
     public ClienteServicio guardarClienteServicio(ClienteServicio clienteServicio) {
         return guardarClienteServicio(clienteServicio, null, null);

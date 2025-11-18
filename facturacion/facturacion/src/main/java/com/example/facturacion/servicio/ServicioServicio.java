@@ -122,4 +122,7 @@ public class ServicioServicio {
             throw new IllegalArgumentException("Error al reactivar el servicio con ID " + safeId + ": " + ex.getMessage());
         }
     }
+    public List<Servicio> obtenerServiciosActivos() {
+        return repositorioServicio.findByActivoTrue();
+    }
 }

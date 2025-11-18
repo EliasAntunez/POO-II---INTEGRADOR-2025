@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import com.example.facturacion.servicio.ServicioClienteServicio;
 import com.example.facturacion.modelo.ClienteServicio;
 
-import java.util.List;
-
 import org.springframework.ui.Model;
 
 
@@ -30,9 +28,12 @@ public class ControladorClienteServicio {
     private ServicioServicio servicioServicio;
 
     @GetMapping({"/", "/listar"})
-    public String listarClientesServicios(Model model) {
-        List<ClienteServicio> clientesServicios = servicioClienteServicio.obtenerTodosLosClientesServiciosActivos();
-        model.addAttribute("clientesServicios", clientesServicios);
+    public String listarClientesServicios(Model model,
+                                          @org.springframework.web.bind.annotation.RequestParam(value = "page", defaultValue = "0") int page,
+                                          @org.springframework.web.bind.annotation.RequestParam(value = "size", defaultValue = "10") int size) {
+        var clientesServiciosPage = servicioClienteServicio.obtenerClientesServiciosPaginados(page, size);
+        model.addAttribute("clientesServiciosPage", clientesServiciosPage);
+        model.addAttribute("clientesServicios", clientesServiciosPage.getContent());
         return "clientes-servicios/listar";
     }
 

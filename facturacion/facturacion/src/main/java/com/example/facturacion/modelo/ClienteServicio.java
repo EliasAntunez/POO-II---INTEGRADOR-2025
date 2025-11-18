@@ -28,12 +28,12 @@ public class ClienteServicio {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id", nullable = false)
+    @JoinColumn(name = "id_cliente", nullable = false)
     @ToString.Exclude
     private Cliente cliente;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "servicio_id", nullable = false)
+    @JoinColumn(name = "id_servicio", nullable = false)
     @ToString.Exclude
     private Servicio servicio;
 

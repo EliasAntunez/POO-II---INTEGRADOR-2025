@@ -1,11 +1,11 @@
 package com.example.facturacion.modelo;
 
 import com.example.facturacion.modelo.enums.Alicuota;
+import com.example.facturacion.modelo.enums.ConvertidorAlicuota;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.Convert;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -47,7 +47,7 @@ public class Servicio {
     private Double precio;
     
     @NotNull(message = "La alícuota es obligatoria")
-    @Enumerated(EnumType.ORDINAL)
+    @Convert(converter = ConvertidorAlicuota.class)
     @Column(name = "alicuota", nullable = false)
     private Alicuota alicuota;
     

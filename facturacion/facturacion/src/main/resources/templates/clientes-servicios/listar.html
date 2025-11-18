@@ -38,7 +38,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr th:each="clienteServicio : ${clientesServicios}"
+                                    <tr th:each="clienteServicio : ${clientesServiciosPage.content}"
                                         th:id="${'clienteServicio' + clienteServicio.id}"
                                         th:data-cliente-servicio-id="${clienteServicio.id}"
                                         onclick="seleccionarClienteServicioDesdeFila(this)">
@@ -66,6 +66,29 @@
                     </form>
                 </div>
                 
+                <!-- Paginación -->
+                <div class="card-footer bg-white border-top" th:if="${clientesServiciosPage.totalPages > 0}">
+                    <div>
+                        <nav aria-label="Paginación clientes-servicios" class="d-flex justify-content-center mt-2">
+                            <ul class="pagination mb-0">
+                                <li class="page-item" th:classappend="${!clientesServiciosPage.hasPrevious()} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/clientes-servicios/listar(page=${clientesServiciosPage.number-1},size=${clientesServiciosPage.size})}" aria-label="Anterior">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(0, clientesServiciosPage.totalPages - 1)}" th:classappend="${i == clientesServiciosPage.number} ? 'active'">
+                                    <a class="page-link" th:href="@{/clientes-servicios/listar(page=${i},size=${clientesServiciosPage.size})}" th:text="${i+1}">1</a>
+                                </li>
+                                <li class="page-item" th:classappend="${!clientesServiciosPage.hasNext()} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/clientes-servicios/listar(page=${clientesServiciosPage.number+1},size=${clientesServiciosPage.size})}" aria-label="Siguiente">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+
                 <div class="card-footer bg-light py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         
