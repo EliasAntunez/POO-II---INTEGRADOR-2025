@@ -175,7 +175,12 @@
                 </li>
                 <li>
                     <a class="nav-link" th:classappend="${active=='clientes-servicios'} ? 'active' : ''" th:href="@{/clientes-servicios/listar}">
-                        <i class="bi bi-receipt"></i> Clientes - Servicios
+                        <i class="bi bi-link-45deg"></i> Clientes - Servicios
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link" th:classappend="${active=='facturas'} ? 'active' : ''" th:href="@{/facturas/listar}">
+                        <i class="bi bi-receipt"></i> Facturas
                     </a>
                 </li>
             </ul>
