@@ -28,26 +28,35 @@
                         </a>
                     </ul>
                 </div>
-            </div>
-        </div>
 
-        <div class="row g-4">
-        <div class="col-12 col-lg-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header">
-                    <strong>Acciones rápidas</strong>
-                </div>
                 <div class="card-body p-0">
                     <ul class="list-group list-group-flush">
                         <a th:href="@{/servicios/crear}" class="list-group-item list-group-item-action text-dark text-decoration-none">
-                            <i class="bi bi-person-plus me-2 text-primary"></i>
+                            <i class="bi bi-briefcase me-2 text-primary"></i>
                             Nuevo servicio
                         </a>
                     </ul>
                 </div>
+
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <a th:href="@{/clientes-servicios/crear}" class="list-group-item list-group-item-action text-dark text-decoration-none">
+                            <i class="bi bi-link-45deg me-2 text-primary"></i>
+                            Asignar servicio a cliente
+                        </a>
+                    </ul>
+                </div>
+
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <a th:href="@{/facturas/confirmar-pago}" class="list-group-item list-group-item-action text-dark text-decoration-none">
+                            <i class="bi bi-receipt me-2 text-primary"></i>
+                            Confirmar Pago de Factura
+                        </a>
+                    </ul>
+                </div>
             </div>
-        </div>
-        
+        </div>  
 </th:block>
 
 </body>

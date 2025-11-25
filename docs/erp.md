@@ -29,7 +29,6 @@
 - Si la condición fiscal del cliente cambia, la misma afectará únicamente a transacciones futuras.
 - El sistema debe validar que los campos obligatorios sean validados antes (no permitir campos vacíos)
 
-
 ## HU-03 Baja de Cliente
 **Descripción:** Como **Administrador** quiero **dar de baja a clientes** para **que estos no puedan acceder a su cuenta**
 
