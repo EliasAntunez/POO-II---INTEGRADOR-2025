@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+<head>
+    <title>Pago Parcial</title>
+</head>
+<body>
+    <th:block th:fragment="content">
+        <style>
+            .resumen-saldo {
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                color: white;
+                border-radius: 10px;
+                padding: 2rem;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            }
+        </style>
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a th:href="@{/facturas/listar}">Facturas</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a th:href="@{/facturas/{id}(id=${factura.id})}" 
+                       th:text="${'Factura ' + factura.numeroFactura}">
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Pago Parcial</li>
+            </ol>
+        </nav>
+
+        <!-- Mensajes -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="container" style="max-width: 900px;">
+            
+            <!-- Título -->
+            <div class="text-center mb-4">
+                <h1 class="h2">
+                    <i class="bi bi-cash-stack"></i>
+                    Registrar Pago Parcial
+                </h1>
+                <p class="text-muted">
+                    Factura <span th:text="${factura.numeroFactura}"></span>
+                </p>
+            </div>
+
+            <!-- Resumen de Saldo -->
+            <div class="resumen-saldo mb-4">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase mb-2">Monto Total</h6>
+                        <div class="fs-4 fw-bold" 
+                             th:text="${'$ ' + #numbers.formatDecimal(factura.montoTotal, 1, 'POINT', 2, 'COMMA')}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase mb-2">Total Pagado</h6>
+                        <div class="fs-4 fw-bold" 
+                             th:text="${'$ ' + #numbers.formatDecimal(totalPagado, 1, 'POINT', 2, 'COMMA')}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase mb-2">Saldo Pendiente</h6>
+                        <div class="fs-3 fw-bold" 
+                             th:text="${'$ ' + #numbers.formatDecimal(saldoPendiente, 1, 'POINT', 2, 'COMMA')}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historial de Pagos Anteriores -->
+            <div th:if="${!pagos.empty}" class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> 
+                        Pagos Anteriores (<span th:text="${pagos.size()}"></span>)
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Usuario</th>
+                                    <th class="text-end">Monto</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="pago : ${pagos}">
+                                    <td th:text="${#temporals.format(pago.fechaPago, 'dd/MM/yyyy')}"></td>
+                                    <td th:text="${pago.usuario}"></td>
+                                    <td class="text-end text-success fw-bold"
+                                        th:text="${'$ ' + #numbers.formatDecimal(pago.monto, 1, 'POINT', 2, 'COMMA')}">
+                                    </td>
+                                    <td th:text="${pago.observaciones ?: '-'}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de Pago Parcial -->
+            <div class="card border-warning mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cash"></i> Nuevo Pago Parcial
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/facturas/{id}/pago-parcial(id=${factura.id})}" method="post">
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>HU-12:</strong> Ingrese el monto a pagar. 
+                            El sistema validará que no exceda el saldo pendiente de 
+                            <strong th:text="${'$ ' + #numbers.formatDecimal(saldoPendiente, 1, 'POINT', 2, 'COMMA')}"></strong>.
+                            Si el saldo llega a cero, la factura pasará automáticamente a estado PAGADA.
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="monto" class="form-label">
+                                    <i class="bi bi-cash-coin"></i> Monto a Pagar:
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="monto" 
+                                           name="monto" 
+                                           required 
+                                           step="0.01" 
+                                           min="0.01"
+                                           th:max="${saldoPendiente}"
+                                           placeholder="0.00">
+                                </div>
+                                <small class="text-muted">
+                                    Máximo: <span th:text="${'$ ' + #numbers.formatDecimal(saldoPendiente, 1, 'POINT', 2, 'COMMA')}"></span>
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="usuario" class="form-label">
+                                    <i class="bi bi-person"></i> Usuario:
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="usuario" 
+                                       name="usuario" 
+                                       value="Administrador" 
+                                       required 
+                                       maxlength="100">
+                            </div>
+
+                            <div class="col-12">
+                                <label for="observaciones" class="form-label">
+                                    <i class="bi bi-chat-left-text"></i> Observaciones (opcional):
+                                </label>
+                                <textarea class="form-control" 
+                                          id="observaciones" 
+                                          name="observaciones" 
+                                          rows="2" 
+                                          maxlength="500"
+                                          placeholder="Ej: Pago con transferencia bancaria"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Acciones rápidas -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="btn-group w-100" role="group">
+                                    <button type="button" class="btn btn-outline-secondary"
+                                            onclick="document.getElementById('monto').value = (parseFloat(document.getElementById('monto').getAttribute('max')) * 0.25).toFixed(2)">
+                                        25%
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary"
+                                            onclick="document.getElementById('monto').value = (parseFloat(document.getElementById('monto').getAttribute('max')) * 0.50).toFixed(2)">
+                                        50%
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary"
+                                            onclick="document.getElementById('monto').value = (parseFloat(document.getElementById('monto').getAttribute('max')) * 0.75).toFixed(2)">
+                                        75%
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success"
+                                            onclick="document.getElementById('monto').value = document.getElementById('monto').getAttribute('max')">
+                                        100% (Total)
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mt-1">Haga clic para completar automáticamente</small>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                            <a th:href="@{/facturas/{id}(id=${factura.id})}" 
+                               class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle-fill"></i> 
+                                Registrar Pago
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+    </th:block>
+</body>
+</html>
