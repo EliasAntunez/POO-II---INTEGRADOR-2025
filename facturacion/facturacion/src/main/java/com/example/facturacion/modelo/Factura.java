@@ -19,6 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
@@ -123,6 +124,19 @@ public class Factura {
     private List<DetalleFactura> detalles = new ArrayList<>();
 
     /**
+     * HU-12: Pagos realizados sobre esta factura (total o parciales).
+     */
+    @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Pago> pagos = new ArrayList<>();
+
+    /**
+     * HU-09: Nota de crédito asociada (si la factura fue anulada).
+     */
+    @OneToOne(mappedBy = "factura", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private NotaCredito notaCredito;
+
+    /**
      * Establece la fecha de emisión al momento de crear la factura.
      */
     @PrePersist
@@ -194,12 +208,30 @@ public class Factura {
 
     /**
      * Anula la factura.
+     * HU-09: Ahora requiere motivo y usuario responsable (se crea NotaCredito).
      */
-    public void anular() {
+    public void anular(String motivo, String usuarioResponsable) {
         if (estado == EstadoFactura.PAGADA) {
             throw new IllegalStateException("No se puede anular una factura pagada");
         }
+        if (estado == EstadoFactura.ANULADA) {
+            throw new IllegalStateException("La factura ya está anulada. No se puede aplicar doble anulación");
+        }
+        if (estado != EstadoFactura.EMITIDA) {
+            throw new IllegalStateException("Solo se pueden anular facturas en estado EMITIDA");
+        }
+        
         this.estado = EstadoFactura.ANULADA;
+        
+        // HU-09: Crear nota de crédito
+        NotaCredito nc = NotaCredito.builder()
+            .factura(this)
+            .monto(this.montoTotal)
+            .motivo(motivo)
+            .usuarioResponsable(usuarioResponsable)
+            .build();
+        
+        this.notaCredito = nc;
     }
 
     /**
@@ -207,6 +239,80 @@ public class Factura {
      */
     public boolean estaPagada() {
         return estado == EstadoFactura.PAGADA;
+    }
+
+    /**
+     * HU-12: Calcula el total pagado hasta el momento.
+     */
+    public BigDecimal calcularTotalPagado() {
+        return pagos.stream()
+            .map(Pago::getMonto)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * HU-12: Calcula el saldo pendiente de la factura.
+     */
+    public BigDecimal calcularSaldoPendiente() {
+        return montoTotal.subtract(calcularTotalPagado());
+    }
+
+    /**
+     * HU-12: Verifica si la factura tiene saldo pendiente.
+     */
+    public boolean tieneSaldoPendiente() {
+        return calcularSaldoPendiente().compareTo(BigDecimal.ZERO) > 0;
+    }
+
+    /**
+     * HU-12: Registra un pago parcial.
+     * @param montoPago Monto a pagar
+     * @param usuario Usuario que registra
+     * @param observaciones Observaciones opcionales
+     * @return El pago creado
+     */
+    public Pago registrarPagoParcial(BigDecimal montoPago, String usuario, String observaciones) {
+        // Validar estado
+        if (!puedePagarse()) {
+            throw new IllegalStateException(
+                "La factura no puede recibir pagos. Estado actual: " + estado.getDescripcion());
+        }
+
+        // Validar monto
+        if (montoPago == null || montoPago.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("El monto debe ser mayor a cero");
+        }
+
+        BigDecimal saldoPendiente = calcularSaldoPendiente();
+        if (montoPago.compareTo(saldoPendiente) > 0) {
+            throw new IllegalArgumentException(
+                String.format("El monto ($%.2f) excede el saldo pendiente ($%.2f)", 
+                    montoPago, saldoPendiente));
+        }
+
+        // Crear el pago
+        Pago pago = Pago.builder()
+            .factura(this)
+            .monto(montoPago)
+            .usuario(usuario)
+            .observaciones(observaciones)
+            .esPagoTotal(false)
+            .build();
+
+        pagos.add(pago);
+
+        // Verificar si se completó el pago
+        BigDecimal nuevoSaldo = calcularSaldoPendiente();
+        if (nuevoSaldo.compareTo(BigDecimal.ZERO) == 0) {
+            this.estado = EstadoFactura.PAGADA;
+            this.fechaPago = LocalDate.now();
+            this.usuarioPago = usuario;
+        } else if (this.estado == EstadoFactura.EMITIDA) {
+            // Cambiar a pendiente de pago si era emitida
+            this.estado = EstadoFactura.PENDIENTE_PAGO;
+        }
+
+        return pago;
     }
 
     /**

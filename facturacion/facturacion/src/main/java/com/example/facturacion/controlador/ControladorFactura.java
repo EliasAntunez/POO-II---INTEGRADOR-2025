@@ -1,5 +1,7 @@
 package com.example.facturacion.controlador;
 
+import java.math.BigDecimal;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,6 +19,8 @@ import com.example.facturacion.servicio.ServicioFactura;
 /**
  * Controlador para manejar las operaciones relacionadas con las facturas.
  * HU-11: Registrar Pago Total
+ * HU-12: Registrar Pago Parcial
+ * HU-09: Anulación con Nota de Crédito
  */
 @Controller
 @RequestMapping("/facturas")
@@ -55,11 +59,11 @@ public class ControladorFactura {
             model.addAttribute("todosLosEstados", EstadoFactura.values());
             
             // Estadísticas para el dashboard
-            model.addAttribute("totalPendientes",
+            model.addAttribute("totalPendientes", 
                 servicioFactura.contarFacturasPorEstado(EstadoFactura.PENDIENTE_PAGO));
-            model.addAttribute("totalEmitidas",
+            model.addAttribute("totalEmitidas", 
                 servicioFactura.contarFacturasPorEstado(EstadoFactura.EMITIDA));
-            model.addAttribute("totalPagadas",
+            model.addAttribute("totalPagadas", 
                 servicioFactura.contarFacturasPorEstado(EstadoFactura.PAGADA));
             
             return "facturas/listar";
@@ -73,14 +77,14 @@ public class ControladorFactura {
      * HU-11: Ver detalle de una factura.
      */
     @GetMapping("/{id}")
-    public String verDetalleFactura(@PathVariable("id") Long id,
-                                    Model model,
-                                    RedirectAttributes redirectAttrs) {
+    public String verDetalleFactura(@PathVariable("id") Long id, 
+                                     Model model, 
+                                     RedirectAttributes redirectAttrs) {
         try {
             Factura factura = servicioFactura.obtenerFacturaPorId(id);
             
             if (factura == null) {
-                redirectAttrs.addFlashAttribute("error",
+                redirectAttrs.addFlashAttribute("error", 
                     "La factura con ID " + id + " no existe");
                 return "redirect:/facturas/listar";
             }
@@ -89,7 +93,7 @@ public class ControladorFactura {
             return "facturas/detalle";
             
         } catch (Exception ex) {
-            redirectAttrs.addFlashAttribute("error",
+            redirectAttrs.addFlashAttribute("error", 
                 "Error al obtener factura: " + ex.getMessage());
             return "redirect:/facturas/listar";
         }
@@ -99,23 +103,23 @@ public class ControladorFactura {
      * HU-11: Mostrar formulario de confirmación de pago.
      */
     @GetMapping("/{id}/confirmar-pago")
-    public String mostrarConfirmacionPago(@PathVariable("id") Long id,
-                                        Model model,
-                                        RedirectAttributes redirectAttrs) {
+    public String mostrarConfirmacionPago(@PathVariable("id") Long id, 
+                                           Model model, 
+                                           RedirectAttributes redirectAttrs) {
         try {
             Factura factura = servicioFactura.obtenerFacturaPorId(id);
             
             if (factura == null) {
-                redirectAttrs.addFlashAttribute("error",
+                redirectAttrs.addFlashAttribute("error", 
                     "La factura con ID " + id + " no existe");
                 return "redirect:/facturas/listar";
             }
             
             // Validar que puede pagarse
             if (!factura.puedePagarse()) {
-                redirectAttrs.addFlashAttribute("error",
-                    String.format("La factura %s no puede pagarse. Estado actual: %s",
-                        factura.getNumeroFactura(),
+                redirectAttrs.addFlashAttribute("error", 
+                    String.format("La factura %s no puede pagarse. Estado actual: %s", 
+                        factura.getNumeroFactura(), 
                         factura.getEstado().getDescripcion()));
                 return "redirect:/facturas/" + id;
             }
@@ -124,7 +128,7 @@ public class ControladorFactura {
             return "facturas/confirmar-pago";
             
         } catch (Exception ex) {
-            redirectAttrs.addFlashAttribute("error",
+            redirectAttrs.addFlashAttribute("error", 
                 "Error al cargar formulario: " + ex.getMessage());
             return "redirect:/facturas/listar";
         }
@@ -145,9 +149,9 @@ public class ControladorFactura {
             Factura facturaPagada = servicioFactura.registrarPagoTotal(id, usuarioPago);
             
             // Mensaje de éxito
-            redirectAttrs.addFlashAttribute("exito",
-                String.format("✓ Pago registrado exitosamente para la factura %s. Monto: $%.2f",
-                    facturaPagada.getNumeroFactura(),
+            redirectAttrs.addFlashAttribute("exito", 
+                String.format("✓ Pago registrado exitosamente para la factura %s. Monto: $%.2f", 
+                    facturaPagada.getNumeroFactura(), 
                     facturaPagada.getMontoTotal()));
             
             return "redirect:/facturas/" + id;
@@ -159,7 +163,7 @@ public class ControladorFactura {
             
         } catch (Exception ex) {
             // Error inesperado
-            redirectAttrs.addFlashAttribute("error",
+            redirectAttrs.addFlashAttribute("error", 
                 "Error inesperado al registrar pago: " + ex.getMessage());
             return "redirect:/facturas/" + id;
         }
@@ -189,23 +193,149 @@ public class ControladorFactura {
     }
 
     /**
-     * Anular una factura.
+     * HU-12: Mostrar formulario de pago parcial.
      */
-    @PostMapping("/{id}/anular")
-    public String anularFactura(@PathVariable("id") Long id,
-                                RedirectAttributes redirectAttrs) {
+    @GetMapping("/{id}/pago-parcial")
+    public String mostrarFormularioPagoParcial(@PathVariable("id") Long id, 
+                                                Model model, 
+                                                RedirectAttributes redirectAttrs) {
         try {
-            Factura facturaAnulada = servicioFactura.anularFactura(id);
+            Factura factura = servicioFactura.obtenerFacturaPorId(id);
             
-            redirectAttrs.addFlashAttribute("exito",
-                String.format("Factura %s anulada correctamente",
-                    facturaAnulada.getNumeroFactura()));
+            if (factura == null) {
+                redirectAttrs.addFlashAttribute("error", 
+                    "La factura con ID " + id + " no existe");
+                return "redirect:/facturas/listar";
+            }
+            
+            // Validar que puede recibir pagos
+            if (!factura.puedePagarse()) {
+                redirectAttrs.addFlashAttribute("error", 
+                    String.format("La factura %s no puede recibir pagos. Estado actual: %s", 
+                        factura.getNumeroFactura(), 
+                        factura.getEstado().getDescripcion()));
+                return "redirect:/facturas/" + id;
+            }
+            
+            // Obtener historial de pagos
+            var pagos = servicioFactura.obtenerPagosDeFactura(id);
+            
+            model.addAttribute("factura", factura);
+            model.addAttribute("pagos", pagos);
+            model.addAttribute("saldoPendiente", factura.calcularSaldoPendiente());
+            model.addAttribute("totalPagado", factura.calcularTotalPagado());
+            
+            return "facturas/pago-parcial";
+            
+        } catch (Exception ex) {
+            redirectAttrs.addFlashAttribute("error", 
+                "Error al cargar formulario: " + ex.getMessage());
+            return "redirect:/facturas/listar";
+        }
+    }
+
+    /**
+     * HU-12: REGISTRAR PAGO PARCIAL.
+     */
+    @PostMapping("/{id}/pago-parcial")
+    public String registrarPagoParcial(
+            @PathVariable("id") Long id,
+            @RequestParam("monto") BigDecimal monto,
+            @RequestParam(value = "usuario", required = false, defaultValue = "Administrador") String usuario,
+            @RequestParam(value = "observaciones", required = false) String observaciones,
+            RedirectAttributes redirectAttrs) {
+        
+        try {
+            // Registrar el pago parcial
+            var pago = servicioFactura.registrarPagoParcial(id, monto, usuario, observaciones);
+            
+            // Obtener factura actualizada
+            Factura factura = servicioFactura.obtenerFacturaPorId(id);
+            BigDecimal saldoPendiente = factura.calcularSaldoPendiente();
+            
+            // Mensaje según si quedó saldo o no
+            if (saldoPendiente.compareTo(BigDecimal.ZERO) == 0) {
+                redirectAttrs.addFlashAttribute("exito", 
+                    String.format("✓ Pago completado. Factura %s totalmente pagada. Monto: $%,.2f", 
+                        factura.getNumeroFactura(), monto));
+            } else {
+                redirectAttrs.addFlashAttribute("exito", 
+                    String.format("✓ Pago parcial registrado. Monto: $%,.2f | Saldo pendiente: $%,.2f", 
+                        monto, saldoPendiente));
+            }
             
             return "redirect:/facturas/" + id;
             
         } catch (IllegalArgumentException ex) {
             redirectAttrs.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/facturas/" + id + "/pago-parcial";
+            
+        } catch (Exception ex) {
+            redirectAttrs.addFlashAttribute("error", 
+                "Error inesperado al registrar pago: " + ex.getMessage());
             return "redirect:/facturas/" + id;
+        }
+    }
+
+    /**
+     * HU-09: Mostrar formulario de anulación con nota de crédito.
+     */
+    @GetMapping("/{id}/anular")
+    public String mostrarFormularioAnulacion(@PathVariable("id") Long id, 
+                                              Model model, 
+                                              RedirectAttributes redirectAttrs) {
+        try {
+            Factura factura = servicioFactura.obtenerFacturaPorId(id);
+            
+            if (factura == null) {
+                redirectAttrs.addFlashAttribute("error", 
+                    "La factura con ID " + id + " no existe");
+                return "redirect:/facturas/listar";
+            }
+            
+            // Validar estado
+            if (factura.getEstado() != EstadoFactura.EMITIDA) {
+                redirectAttrs.addFlashAttribute("error", 
+                    "Solo se pueden anular facturas en estado EMITIDA");
+                return "redirect:/facturas/" + id;
+            }
+            
+            model.addAttribute("factura", factura);
+            return "facturas/anular";
+            
+        } catch (Exception ex) {
+            redirectAttrs.addFlashAttribute("error", 
+                "Error al cargar formulario: " + ex.getMessage());
+            return "redirect:/facturas/listar";
+        }
+    }
+
+    /**
+     * HU-09: ANULAR FACTURA CON NOTA DE CRÉDITO.
+     */
+    @PostMapping("/{id}/anular")
+    public String anularFacturaConNotaCredito(
+            @PathVariable("id") Long id,
+            @RequestParam("motivo") String motivo,
+            @RequestParam(value = "usuarioResponsable", required = false, defaultValue = "Administrador") String usuarioResponsable,
+            @RequestParam(value = "observaciones", required = false) String observaciones,
+            RedirectAttributes redirectAttrs) {
+        
+        try {
+            // Anular con nota de crédito
+            Factura facturaAnulada = servicioFactura.anularFacturaConNotaCredito(
+                id, motivo, usuarioResponsable);
+            
+            redirectAttrs.addFlashAttribute("exito", 
+                String.format("✓ Factura %s anulada correctamente. Nota de Crédito: %s", 
+                    facturaAnulada.getNumeroFactura(), 
+                    facturaAnulada.getNotaCredito().getNumero()));
+            
+            return "redirect:/facturas/" + id;
+            
+        } catch (IllegalArgumentException ex) {
+            redirectAttrs.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/facturas/" + id + "/anular";
         }
     }
 }
