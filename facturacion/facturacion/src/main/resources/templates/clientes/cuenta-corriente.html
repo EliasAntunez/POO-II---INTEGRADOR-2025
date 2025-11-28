@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cuenta Corriente - Cliente</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+
+<th:block th:fragment="content">
+
+    <style>
+        .movimiento-cargo {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .movimiento-credito,
+        .movimiento-pago,
+        .movimiento-anulacion {
+            border-left: 4px solid #198754;
+        }
+        
+        .movimiento-factura {
+            border-left: 4px solid #0dcaf0;
+        }
+        
+        .saldo-card {
+            background: linear-gradient(135deg, rgb(140, 55, 220) 0%, rgb(180, 100, 255) 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 20px rgba(140, 55, 220, 0.3);
+        }
+        
+        .saldo-positivo {
+            color: #198754;
+            font-weight: 700;
+        }
+        
+        .saldo-negativo {
+            color: #dc3545;
+            font-weight: 700;
+        }
+        
+        .saldo-cero {
+            color: #6c757d;
+            font-weight: 600;
+        }
+        
+        .tipo-movimiento-badge {
+            font-size: 0.75rem;
+            padding: 0.4em 0.8em;
+            border-radius: 20px;
+        }
+        
+        .detalle-cliente {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+    </style>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/clientes/listar}">
+                    <i class="bi bi-people-fill"></i> Clientes
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Cuenta Corriente - <span th:text="${cliente.nombreCompleto}"></span>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-wallet2 me-2"></i>
+            Cuenta Corriente
+        </h1>
+        <a th:href="@{/clientes/listar}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        
+        <!-- Información del Cliente -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>
+                        Información del Cliente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="detalle-cliente">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <small class="text-muted d-block">ID Cliente</small>
+                                <strong th:text="${cliente.id}"></strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Estado</small>
+                                <span th:if="${cliente.estado.name() == 'ACTIVO'}" 
+                                      class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span th:text="${cliente.estado.nombre}"></span>
+                                </span>
+                                <span th:if="${cliente.estado.name() == 'SUSPENDIDO'}" 
+                                      class="badge bg-warning text-dark">
+                                    <i class="bi bi-pause-circle"></i>
+                                    <span th:text="${cliente.estado.nombre}"></span>
+                                </span>
+                                <span th:if="${cliente.estado.name() == 'DADO_DE_BAJA'}" 
+                                      class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i>
+                                    <span th:text="${cliente.estado.nombre}"></span>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-2">
+                        
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Nombre Completo</small>
+                            <strong th:text="${cliente.nombreCompleto}"></strong>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Razón Social</small>
+                            <span th:text="${cliente.razonSocial}"></span>
+                        </div>
+                        
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <small class="text-muted d-block">DNI</small>
+                                <span class="font-monospace" th:text="${cliente.dni}"></span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">CUIT</small>
+                                <span class="font-monospace" th:text="${cliente.cuit}"></span>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-2">
+                        
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Condición Fiscal</small>
+                            <span class="badge bg-secondary" th:text="${cliente.condicionFiscal.descripcion}"></span>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Email</small>
+                            <a th:href="'mailto:' + ${cliente.email}" th:text="${cliente.email}"></a>
+                        </div>
+                        
+                        <div class="mb-0">
+                            <small class="text-muted d-block">Teléfono</small>
+                            <a th:href="'tel:' + ${cliente.telefono}" th:text="${cliente.telefono}"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saldo Actual -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-0">
+                    <div class="saldo-card">
+                        <h5 class="text-white-50 mb-3">
+                            <i class="bi bi-cash-stack me-2"></i>
+                            Saldo Actual
+                        </h5>
+                        
+                        <div class="display-3 fw-bold mb-3">
+                            <span th:if="${saldo >= 0}">
+                                $<span th:text="${#numbers.formatDecimal(saldo, 1, 'POINT', 2, 'COMMA')}"></span>
+                            </span>
+                            <span th:if="${saldo < 0}">
+                                -$<span th:text="${#numbers.formatDecimal(saldo * -1, 1, 'POINT', 2, 'COMMA')}"></span>
+                            </span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span th:if="${saldo > 0}" class="badge bg-success bg-opacity-75 px-3 py-2">
+                                    <i class="bi bi-arrow-up-circle me-1"></i>
+                                    Saldo a favor del cliente
+                                </span>
+                                <span th:if="${saldo < 0}" class="badge bg-danger bg-opacity-75 px-3 py-2">
+                                    <i class="bi bi-arrow-down-circle me-1"></i>
+                                    Deuda del cliente
+                                </span>
+                                <span th:if="${saldo == 0}" class="badge bg-light text-dark px-3 py-2">
+                                    <i class="bi bi-dash-circle me-1"></i>
+                                    Cuenta saldada
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <hr class="bg-white opacity-25 my-3">
+                        
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <small class="text-white-50 d-block">Total Movimientos</small>
+                                <strong class="fs-4" th:text="${#lists.size(movimientos)}">0</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-white-50 d-block">Última Actualización</small>
+                                <strong class="fs-6" th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">Hoy</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movimientos -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Movimientos de Cuenta Corriente
+                </h5>
+                <span class="badge bg-primary" th:text="${#lists.size(movimientos)} + ' movimientos'"></span>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th style="width: 120px;">Fecha</th>
+                            <th style="width: 150px;">Tipo</th>
+                            <th>Descripción</th>
+                            <th class="text-end" style="width: 150px;">Monto</th>
+                            <th class="text-end" style="width: 150px;">Impacto</th>
+                            <th style="width: 120px;">Usuario</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="mov : ${movimientos}"
+                            th:classappend="${mov.tipoMovimiento.name() == 'CARGO' || mov.tipoMovimiento.name() == 'FACTURA'} ? 'movimiento-cargo' : 
+                                           ${mov.tipoMovimiento.name() == 'CREDITO'} ? 'movimiento-credito' :
+                                           ${mov.tipoMovimiento.name() == 'PAGO'} ? 'movimiento-pago' : 'movimiento-anulacion'">
+                            
+                            <td class="font-monospace text-muted" th:text="${mov.id}"></td>
+                            
+                            <td>
+                                <small th:text="${#temporals.format(mov.fechaMovimiento, 'dd/MM/yyyy')}"></small>
+                            </td>
+                            
+                            <td>
+                                <!-- CARGO -->
+                                <span th:if="${mov.tipoMovimiento.name() == 'CARGO'}" 
+                                      class="badge tipo-movimiento-badge bg-danger">
+                                    <i class="bi bi-arrow-down-circle me-1"></i>
+                                    <span th:text="${mov.tipoMovimiento.nombre}"></span>
+                                </span>
+                                
+                                <!-- CRÉDITO -->
+                                <span th:if="${mov.tipoMovimiento.name() == 'CREDITO'}" 
+                                      class="badge tipo-movimiento-badge bg-success">
+                                    <i class="bi bi-arrow-up-circle me-1"></i>
+                                    <span th:text="${mov.tipoMovimiento.nombre}"></span>
+                                </span>
+                                
+                                <!-- FACTURA -->
+                                <span th:if="${mov.tipoMovimiento.name() == 'FACTURA'}" 
+                                      class="badge tipo-movimiento-badge bg-info text-dark">
+                                    <i class="bi bi-file-earmark-text me-1"></i>
+                                    <span th:text="${mov.tipoMovimiento.nombre}"></span>
+                                </span>
+                                
+                                <!-- PAGO -->
+                                <span th:if="${mov.tipoMovimiento.name() == 'PAGO'}" 
+                                      class="badge tipo-movimiento-badge bg-success">
+                                    <i class="bi bi-cash-coin me-1"></i>
+                                    <span th:text="${mov.tipoMovimiento.nombre}"></span>
+                                </span>
+                                
+                                <!-- ANULACIÓN -->
+                                <span th:if="${mov.tipoMovimiento.name() == 'ANULACION'}" 
+                                      class="badge tipo-movimiento-badge bg-warning text-dark">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    <span th:text="${mov.tipoMovimiento.nombre}"></span>
+                                </span>
+                            </td>
+                            
+                            <td>
+                                <div th:text="${mov.descripcion}"></div>
+                                
+                                <!-- Enlaces a factura/pago si existen -->
+                                <small class="text-muted" th:if="${mov.factura != null}">
+                                    <i class="bi bi-link-45deg"></i>
+                                    <a th:href="@{/facturas/detalle/{id}(id=${mov.factura.id})}" 
+                                       th:text="'Factura #' + ${mov.factura.id}"></a>
+                                </small>
+                                
+                                <small class="text-muted" th:if="${mov.pago != null}">
+                                    <i class="bi bi-link-45deg"></i>
+                                    <span th:text="'Pago #' + ${mov.pago.id}"></span>
+                                </small>
+                                
+                                <small class="text-muted" th:if="${mov.notaCredito != null}">
+                                    <i class="bi bi-link-45deg"></i>
+                                    <span th:text="'NC #' + ${mov.notaCredito.id}"></span>
+                                </small>
+                            </td>
+                            
+                            <td class="text-end">
+                                <strong>$<span th:text="${#numbers.formatDecimal(mov.monto, 1, 'POINT', 2, 'COMMA')}"></span></strong>
+                            </td>
+                            
+                            <td class="text-end">
+                                <span th:if="${mov.calcularImpactoEnSaldo() < 0}" class="text-danger fw-bold">
+                                    <i class="bi bi-dash-circle"></i>
+                                    $<span th:text="${#numbers.formatDecimal(mov.calcularImpactoEnSaldo() * -1, 1, 'POINT', 2, 'COMMA')}"></span>
+                                </span>
+                                <span th:if="${mov.calcularImpactoEnSaldo() > 0}" class="text-success fw-bold">
+                                    <i class="bi bi-plus-circle"></i>
+                                    $<span th:text="${#numbers.formatDecimal(mov.calcularImpactoEnSaldo(), 1, 'POINT', 2, 'COMMA')}"></span>
+                                </span>
+                                <span th:if="${mov.calcularImpactoEnSaldo() == 0}" class="text-muted">
+                                    $0.00
+                                </span>
+                            </td>
+                            
+                            <td>
+                                <small class="text-muted" th:text="${mov.usuarioRegistro}"></small>
+                            </td>
+                        </tr>
+                        
+                        <tr th:if="${movimientos == null || movimientos.empty}">
+                            <td colspan="7" class="text-center text-muted p-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                <p class="mb-0">No hay movimientos registrados en la cuenta corriente de este cliente.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card-footer bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Los movimientos se muestran ordenados por fecha (más recientes primero)
+                </small>
+                
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                            onclick="window.print()">
+                        <i class="bi bi-printer"></i> Imprimir
+                    </button>
+                    <a th:href="@{/clientes/modificar(id=${cliente.id})}" 
+                       class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> Editar Cliente
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body">
+            <h6 class="mb-3">
+                <i class="bi bi-info-circle me-2"></i>
+                Leyenda de Movimientos
+            </h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-danger" style="width: 4px; height: 30px; margin-right: 10px;"></div>
+                        <div>
+                            <strong class="d-block">CARGO</strong>
+                            <small class="text-muted">Aumenta la deuda del cliente</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-info" style="width: 4px; height: 30px; margin-right: 10px;"></div>
+                        <div>
+                            <strong class="d-block">FACTURA</strong>
+                            <small class="text-muted">Cargo por factura emitida</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success" style="width: 4px; height: 30px; margin-right: 10px;"></div>
+                        <div>
+                            <strong class="d-block">PAGO/CRÉDITO</strong>
+                            <small class="text-muted">Reduce la deuda del cliente</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning" style="width: 4px; height: 30px; margin-right: 10px;"></div>
+                        <div>
+                            <strong class="d-block">ANULACIÓN</strong>
+                            <small class="text-muted">Reversión por nota de crédito</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+
+</body>
+</html>
