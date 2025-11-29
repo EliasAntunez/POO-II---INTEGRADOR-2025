@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+<head>
+    <title>Factura Detalle</title>
+</head>
+<body>
+<th:block th:fragment="content">
+
+    <style>
+        /* ================= ESTILOS GENERALES (PANTALLA) ================= */
+        .factura-container {
+            background: white;
+            padding: 30px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            font-size: 12px;
+        }
+
+        .watermark-anulada {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 8rem; color: rgba(220, 53, 69, 0.15);
+            font-weight: bold; border: 10px solid rgba(220, 53, 69, 0.15);
+            padding: 10px 40px; z-index: 0; pointer-events: none;
+        }
+
+        /* HEADER SUPERIOR (ORIGINAL) */
+        .header-top { 
+            text-align: center; font-weight: bold; font-size: 16px; 
+            padding-bottom: 5px; border-bottom: 1px solid black; 
+        }
+
+        /* CONTENEDOR FLEX PRINCIPAL DEL HEADER */
+        .header-row { 
+            display: flex; 
+            border-bottom: 1px solid black; 
+            position: relative; /* Para posicionar la letra absoluta respecto a esto */
+            padding-top: 15px;
+        }
+
+        /* CAJA LETRA (A/B) */
+        .letra-box-container {
+            position: absolute; 
+            top: 0; 
+            left: 50%; 
+            transform: translateX(-50%);
+            background: white; 
+            width: 60px; 
+            text-align: center;
+            border-left: 1px solid black; 
+            border-right: 1px solid black; 
+            border-bottom: 1px solid black;
+            z-index: 10; 
+            padding-bottom: 5px;
+        }
+        .letra { font-size: 36px; font-weight: bold; line-height: 36px; }
+        .codigo-letra { font-size: 10px; font-weight: bold; }
+
+        /* COLUMNAS */
+        .col-izq { width: 50%; padding: 10px 20px 10px 20px; border-right: 1px solid black; }
+        .col-der { width: 50%; padding: 10px 20px 10px 40px; }
+
+        .numero-factura { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
+        .data-label { font-weight: bold; }
+
+        .cliente-section {
+            border-bottom: 1px solid black;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        /* TABLA */
+        .table-factura { width: 100%; border-collapse: collapse; }
+        .table-factura thead th {
+            background-color: #e9ecef;
+            border-bottom: 1px solid black;
+            border-top: 1px solid black;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            padding: 8px;
+        }
+        .table-factura td { padding: 8px; }
+        .table-factura tfoot td { border-top: 2px solid black; }
+
+        .actions-bar { max-width: 1000px; margin: 0 auto 20px auto; }
+
+        /* IMPRESIÓN */
+        @media print {
+            body * { visibility: hidden; }
+            .sidebar, .navbar, header, footer, .actions-bar, .btn, #sidebar-wrapper { display: none !important; }
+            .factura-container, .factura-container * { visibility: visible; }
+            .factura-container {
+                position: absolute; left: 0; top: 0; width: 100%;
+                margin: 0 !important; padding: 20px !important;
+                border: none !important; box-shadow: none !important;
+            }
+            #wrapper { margin: 0 !important; padding: 0 !important; }
+            .content { margin: 0 !important; padding: 0 !important; background: white !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+
+    <div class="actions-bar d-flex justify-content-between align-items-center">
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </button>
+        
+        <div class="d-flex gap-2">
+            <a th:if="${factura.anulada}" 
+               th:href="@{/facturas/ver-nota-credito/factura/{id}(id=${factura.id})}" 
+               class="btn btn-warning text-dark">
+                <i class="bi bi-file-earmark-break"></i> Ver Nota de Crédito
+            </a>
+            <form th:if="${!factura.anulada}" 
+                  th:action="@{/facturas/anular/{id}(id=${factura.id})}" 
+                  method="post"
+                  onsubmit="return confirm('¿Está seguro de ANULAR esta factura? Esta acción es irreversible.');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-x-circle"></i> Anular Factura
+                </button>
+            </form>
+
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer"></i> Imprimir
+            </button>
+        </div>
+    </div>
+
+    <div class="factura-container">
+        
+        <div th:if="${factura.anulada}" class="watermark-anulada">ANULADA</div>
+
+        <div class="header-top">ORIGINAL</div>
+
+        <div class="header-row">
+            
+            <div class="letra-box-container">
+                <div class="letra" th:text="${factura.tipoComprobante.letra}">B</div>
+                <div class="codigo-letra" th:text="'COD. ' + ${factura.tipoComprobante.codigo}">COD. 06</div>
+            </div>
+
+            <div class="col-izq">
+                <h2 class="fw-bold mb-0">FactuApp S.A.</h2>
+                <small class="fw-bold d-block mb-2">Facturación de Servicios</small>
+                
+                <p class="mb-0"><small><strong>Razón Social:</strong> FactuApp S.A.</small></p>
+                <p class="mb-0"><small><strong>Domicilio:</strong> Av. Libertador 1234, CABA</small></p>
+                <p class="mb-0"><small><strong>Condición IVA:</strong> Responsable Inscripto</small></p>
+            </div>
+
+            <div class="col-der">
+                <div class="numero-factura">FACTURA</div>
+                <div class="fs-5 mb-3">N° <span th:text="${'0001-' + #numbers.formatInteger(factura.id, 8)}">0001-00000001</span></div>
+                
+                <p class="mb-0"><strong>Fecha de Emisión:</strong> <span th:text="${#temporals.format(factura.fechaEmision, 'dd/MM/yyyy')}"></span></p>
+                <p class="mb-0"><strong>CUIT:</strong> 30-11223344-5</p>
+                <p class="mb-0"><strong>Ingresos Brutos:</strong> 901-283812</p>
+                <p class="mb-0"><strong>Inicio de Actividades:</strong> 01/01/2020</p>
+            </div>
+        </div>
+
+        <div class="cliente-section">
+            <div class="row px-3">
+                <div class="col-md-8">
+                    <p class="mb-1"><strong>Señor/es:</strong> <span th:text="${factura.cliente.razonSocial}"></span></p>
+                    <p class="mb-1"><strong>Domicilio:</strong> <span th:text="${factura.cliente.direccion}"></span></p>
+                    <p class="mb-0"><strong>Condición IVA:</strong> <span th:text="${factura.cliente.condicionFiscal.descripcion}"></span></p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1"><strong>CUIT:</strong> <span th:text="${factura.cliente.cuit}"></span></p>
+                    <p class="mb-1"><strong>Cond. Venta:</strong> Cuenta Corriente</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive" style="min-height: 400px;">
+            <table class="table-factura">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 80px;">Cant.</th>
+                        <th>Descripción / Servicio</th>
+                        <th class="text-end" style="width: 150px;">P. Unitario</th>
+                        <th class="text-center" style="width: 80px;">IVA</th>
+                        <th class="text-end" style="width: 150px;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="detalle : ${factura.detalles}">
+                        <td class="text-center" th:text="${detalle.cantidad}"></td>
+                        <td>
+                            <strong th:text="${detalle.servicio.nombre}"></strong>
+                            <div class="small text-muted fst-italic" th:text="${detalle.servicio.descripcion}"></div>
+                        </td>
+                        <td class="text-end" th:text="${'$ ' + #numbers.formatDecimal(detalle.precioUnitario, 1, 'POINT', 2, 'COMMA')}"></td>
+                        <td class="text-center" th:text="${#numbers.formatDecimal(detalle.alicuotaIva, 1, 'POINT', 0, 'COMMA') + '%'}"></td>
+                        <td class="text-end" th:text="${'$ ' + #numbers.formatDecimal(detalle.subtotal, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row mt-4 px-3">
+            <div class="col-8">
+                <div class="border p-2">
+                    <small><strong>Observaciones:</strong> Documento válido como factura. El pago debe realizarse antes del vencimiento.</small>
+                    <div class="mt-2">
+                        <i class="bi bi-upc-scan" style="font-size: 3rem;"></i>
+                        <br>
+                        <small class="font-monospace">12345678901234567890</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="text-end text-muted">Subtotal Neto:</td>
+                        <td class="text-end" th:text="${'$ ' + #numbers.formatDecimal(factura.montoTotalNeto, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-end text-muted">IVA Total:</td>
+                        <td class="text-end" th:text="${'$ ' + #numbers.formatDecimal(factura.montoTotalIVA, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                    <tr class="border-top border-dark border-2">
+                        <td class="text-end fs-5 fw-bold">TOTAL:</td>
+                        <td class="text-end fs-5 fw-bold" th:text="${'$ ' + #numbers.formatDecimal(factura.total, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="row mt-4 pt-2 border-top px-3">
+            <div class="col-6">
+                <small class="text-muted">C.A.I.: 12345678901234</small>
+            </div>
+            <div class="col-6 text-end">
+                <small class="text-muted">Fecha Vto. C.A.I.: 31/12/2030</small>
+            </div>
+        </div>
+
+    </div>
+
+</th:block>
+</body>
+</html>

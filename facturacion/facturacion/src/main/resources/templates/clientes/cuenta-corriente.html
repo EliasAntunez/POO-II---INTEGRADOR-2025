@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+<head>
+    <title>Cuenta Corriente</title>
+</head>
+<body>
+<th:block th:fragment="content">
+
+    <style>
+        /* Tarjeta Información Cliente (Azul) */
+        .card-info-header {
+            background-color: #0d6efd; /* Azul Bootstrap */
+            color: white;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        
+        /* Tarjeta Saldo (Violeta Degradado) */
+        .card-saldo {
+            background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); /* Violeta similar a la imagen */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+        }
+
+        /* Etiquetas y Badges */
+        .badge-activo { background-color: #198754; } /* Verde */
+        .badge-fiscal { background-color: #6c757d; font-weight: normal; } /* Gris */
+        .badge-deuda { background-color: #dc3545; border: 1px solid white; } /* Rojo con borde */
+        .badge-favor { background-color: #198754; border: 1px solid white; } /* Verde con borde */
+
+        /* Texto */
+        .label-small { font-size: 0.85rem; color: #6c757d; display: block; margin-bottom: 2px; }
+        .text-data { font-weight: 500; color: #000; }
+        .saldo-amount { font-size: 3.5rem; font-weight: 800; line-height: 1.2; }
+
+        /* Tabla */
+        .table-header-custom {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .table-header-custom th { font-weight: 600; color: #495057; }
+        
+        /* Badges de tabla */
+        .badge-mov-factura { background-color: #0dcaf0; color: black; }
+        .badge-mov-pago { background-color: #198754; }
+        .badge-mov-anulacion { background-color: #ffc107; color: black; }
+    </style>
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a th:href="@{/clientes/listar}">Clientes</a></li>
+                    <li class="breadcrumb-item active">Cuenta Corriente - <span th:text="${cliente.nombre + ' ' + cliente.apellido}"></span></li>
+                </ol>
+            </nav>
+            <h2 class="mb-0 fw-bold"><i class="bi bi-folder2-open me-2"></i> Cuenta Corriente</h2>
+        </div>
+        <a th:href="@{/clientes/listar}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row g-4 mb-5">
+        
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-info-header">
+                    <i class="bi bi-person-circle me-2"></i> Información del Cliente
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3 border-bottom pb-3">
+                        <div class="col-6">
+                            <span class="label-small">ID Cliente</span>
+                            <span class="text-data fs-5" th:text="${cliente.id}"></span>
+                        </div>
+                        <div class="col-6 text-end">
+                            <span class="label-small">Estado</span>
+                            <span class="badge badge-activo" th:if="${cliente.activo}">
+                                <i class="bi bi-check-circle-fill me-1"></i> Activo
+                            </span>
+                            <span class="badge bg-danger" th:unless="${cliente.activo}">Inactivo</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="label-small">Nombre Completo</span>
+                        <div class="text-data fw-bold" th:text="${cliente.nombre + ' ' + cliente.apellido}"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <span class="label-small">Razón Social</span>
+                        <div class="text-data" th:text="${cliente.razonSocial}"></div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <span class="label-small">DNI</span>
+                            <div class="text-data" th:text="${cliente.dni}"></div>
+                        </div>
+                        <div class="col-6">
+                            <span class="label-small">CUIT</span>
+                            <div class="text-data" th:text="${cliente.cuit}"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 border-bottom pb-3">
+                        <span class="label-small">Condición Fiscal</span>
+                        <span class="badge badge-fiscal" th:text="${cliente.condicionFiscal.descripcion}"></span>
+                    </div>
+
+                    <div class="mb-2">
+                        <span class="label-small">Email</span>
+                        <a th:href="'mailto:' + ${cliente.email}" th:text="${cliente.email}"></a>
+                    </div>
+                    <div>
+                        <span class="label-small">Teléfono</span>
+                        <a th:href="'tel:' + ${cliente.telefono}" th:text="${cliente.telefono}"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card card-saldo h-100">
+                <div class="card-body p-4 d-flex flex-column justify-content-center position-relative">
+                    
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-cash-stack me-2"></i> 
+                        <span class="fw-bold text-uppercase" style="letter-spacing: 1px; opacity: 0.8;">Saldo Actual</span>
+                    </div>
+
+                    <div class="saldo-amount mb-3">
+                        <span th:text="${'$' + #numbers.formatDecimal(saldo, 1, 'POINT', 2, 'COMMA')}"></span>
+                    </div>
+
+                    <div>
+                        <span th:if="${saldo > 0}" class="badge badge-deuda px-3 py-2 rounded-pill">
+                            <i class="bi bi-arrow-down-circle me-1"></i> Deuda del cliente
+                        </span>
+                        <span th:if="${saldo <= 0}" class="badge badge-favor px-3 py-2 rounded-pill">
+                            <i class="bi bi-check-circle me-1"></i> Saldo a favor / Al día
+                        </span>
+                    </div>
+                    
+                    <hr style="opacity: 0.3; margin-top: auto; margin-bottom: 15px;">
+                    
+                    <div class="row text-center" style="opacity: 0.9;">
+                        <div class="col-6 border-end border-light">
+                            <small class="d-block text-uppercase" style="font-size: 0.75rem;">Total Movimientos</small>
+                            <strong class="fs-5" th:text="${#lists.size(movimientos)}">0</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="d-block text-uppercase" style="font-size: 0.75rem;">Última Actualización</small>
+                            <strong class="fs-5" th:text="${not #lists.isEmpty(movimientos) ? #temporals.format(movimientos[0].fechaMovimiento, 'dd/MM/yyyy') : #temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}"></strong>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-secondary">
+                <i class="bi bi-list-ul me-2"></i> Movimientos de Cuenta Corriente
+            </h5>
+            <span class="badge bg-primary rounded-pill px-3" th:text="${#lists.size(movimientos) + ' movimientos'}"></span>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-header-custom">
+                        <tr>
+                            <th class="ps-4" style="width: 5%;">ID</th>
+                            <th style="width: 15%;">Fecha</th>
+                            <th class="text-center" style="width: 10%;">Tipo</th>
+                            <th style="width: 40%;">Descripción</th>
+                            <th class="text-end" style="width: 10%;">Monto</th>
+                            <th class="text-end" style="width: 10%;">Impacto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="mov : ${movimientos}">
+                            <td class="ps-4 text-muted fw-bold" th:text="${mov.id}"></td>
+                            
+                            <td th:text="${#temporals.format(mov.fechaMovimiento, 'dd/MM/yyyy HH:mm')}"></td>
+                            
+                            <td class="text-center">
+                                <span th:if="${mov.tipoMovimiento.name() == 'FACTURA'}" class="badge badge-mov-factura">FACTURA</span>
+                                <span th:if="${mov.tipoMovimiento.name() == 'ANULACION'}" class="badge badge-mov-anulacion">ANULACIÓN</span>
+                                <span th:if="${mov.tipoMovimiento.name() == 'PAGO'}" class="badge badge-mov-pago">PAGO</span>
+                            </td>
+                            
+                            <td>
+                                <span th:text="${mov.descripcion}"></span>
+                                <a th:if="${mov.factura != null}" th:href="@{/facturas/ver/{id}(id=${mov.factura.id})}" class="ms-1 text-decoration-none"><i class="bi bi-link-45deg"></i></a>
+                                <a th:if="${mov.notaCredito != null}" th:href="@{/facturas/ver-nota-credito/factura/{id}(id=${mov.notaCredito.factura.id})}" class="ms-1 text-decoration-none text-warning"><i class="bi bi-link-45deg"></i></a>
+                            </td>
+                            
+                            <td class="text-end text-muted" th:text="${'$' + #numbers.formatDecimal(mov.monto, 1, 'POINT', 2, 'COMMA')}"></td>
+                            
+                            <td class="text-end fw-bold">
+                                <span th:if="${mov.calcularImpactoEnSaldo() > 0}" class="text-danger">
+                                    +<span th:text="${#numbers.formatDecimal(mov.calcularImpactoEnSaldo(), 1, 'POINT', 2, 'COMMA')}"></span>
+                                </span>
+                                <span th:if="${mov.calcularImpactoEnSaldo() < 0}" class="text-success">
+                                    <span th:text="${#numbers.formatDecimal(mov.calcularImpactoEnSaldo(), 1, 'POINT', 2, 'COMMA')}"></span>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(movimientos)}">
+                            <td colspan="7" class="text-center py-5 text-muted">No hay movimientos registrados.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+</body>
+</html>
