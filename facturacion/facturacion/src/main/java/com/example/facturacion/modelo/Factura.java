@@ -1,11 +1,12 @@
 package com.example.facturacion.modelo;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.example.facturacion.modelo.enums.EstadoFactura;
+import com.example.facturacion.modelo.enums.TipoComprobante;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -19,310 +20,79 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
-/**
- * Entidad Factura.
- * HU-11: Registrar Pago Total
- */
 @Entity
 @Table(name = "factura")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-@ToString(exclude = {"cliente", "detalles"})
+@Getter @Setter @NoArgsConstructor
 public class Factura {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Cliente asociado a la factura.
-     */
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
-    /**
-     * Número de factura (generado automáticamente).
-     */
-    @Column(name = "numero_factura", unique = true, nullable = false, length = 20)
-    private String numeroFactura;
+    @Column(nullable = false)
+    private LocalDateTime fechaEmision;
 
-    /**
-     * Fecha de emisión de la factura.
-     */
-    @NotNull
-    @Column(name = "fecha_emision", nullable = false)
-    private LocalDate fechaEmision;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal total = BigDecimal.ZERO;
 
-    /**
-     * Fecha de pago (solo si está pagada).
-     */
-    @Column(name = "fecha_pago")
-    private LocalDate fechaPago;
+    @Column(nullable = false)
+    private boolean anulada = false;
 
-    /**
-     * Estado de la factura.
-     */
-    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_comprobante", nullable = false)
+    private TipoComprobante tipoComprobante;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
-    @Builder.Default
-    private EstadoFactura estado = EstadoFactura.EMITIDA;
+    private EstadoFactura estado = EstadoFactura.EMITIDA; // Valor por defecto para evitar null
 
-    /**
-     * Subtotal (suma de todos los detalles sin IVA).
-     */
-    @NotNull
-    @Column(name = "subtotal", nullable = false, precision = 19, scale = 2)
-    @Builder.Default
-    private BigDecimal subtotal = BigDecimal.ZERO;
-
-    /**
-     * Total de IVA.
-     */
-    @NotNull
-    @Column(name = "total_iva", nullable = false, precision = 19, scale = 2)
-    @Builder.Default
-    private BigDecimal totalIva = BigDecimal.ZERO;
-
-    /**
-     * Monto total de la factura (subtotal + IVA).
-     */
-    @NotNull
-    @Column(name = "monto_total", nullable = false, precision = 19, scale = 2)
-    @Builder.Default
-    private BigDecimal montoTotal = BigDecimal.ZERO;
-
-    /**
-     * Usuario que registró el pago (puede ser null si no está pagada).
-     */
-    @Column(name = "usuario_pago", length = 100)
-    private String usuarioPago;
-
-    /**
-     * Observaciones adicionales.
-     */
-    @Column(name = "observaciones", length = 500)
-    private String observaciones;
-
-    /**
-     * Detalles de la factura (líneas de servicios).
-     */
-    @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
+    @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<DetalleFactura> detalles = new ArrayList<>();
 
-    /**
-     * HU-12: Pagos realizados sobre esta factura (total o parciales).
-     */
-    @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Pago> pagos = new ArrayList<>();
-
-    /**
-     * HU-09: Nota de crédito asociada (si la factura fue anulada).
-     */
-    @OneToOne(mappedBy = "factura", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private NotaCredito notaCredito;
-
-    /**
-     * Establece la fecha de emisión al momento de crear la factura.
-     */
-    @PrePersist
-    protected void onCreate() {
-        if (fechaEmision == null) {
-            fechaEmision = LocalDate.now();
-        }
-        if (estado == null) {
-            estado = EstadoFactura.EMITIDA;
-        }
-    }
-
-    // ==================== Métodos de Negocio ====================
-
-    /**
-     * Agrega un detalle a la factura.
-     */
     public void agregarDetalle(DetalleFactura detalle) {
-        detalles.add(detalle);
+        this.detalles.add(detalle);
         detalle.setFactura(this);
     }
 
-    /**
-     * Remueve un detalle de la factura.
-     */
-    public void removerDetalle(DetalleFactura detalle) {
-        detalles.remove(detalle);
-        detalle.setFactura(null);
-    }
-
-    /**
-     * Calcula y actualiza los totales de la factura.
-     */
-    public void calcularTotales() {
-        subtotal = BigDecimal.ZERO;
-        totalIva = BigDecimal.ZERO;
-
-        for (DetalleFactura detalle : detalles) {
-            detalle.calcularTotales();
-            subtotal = subtotal.add(detalle.getSubtotal());
-            totalIva = totalIva.add(detalle.getTotalIva());
-        }
-
-        montoTotal = subtotal.add(totalIva);
-    }
-
-    /**
-     * HU-11: Registra el pago total de la factura.
-     * @param usuarioPago Usuario que registra el pago
-     * @throws IllegalStateException si la factura no puede pagarse
-     */
-    public void registrarPagoTotal(String usuarioPago) {
-        if (!estado.puedePagarse()) {
-            throw new IllegalStateException(
-                "La factura no puede pagarse. Estado actual: " + estado.getDescripcion());
-        }
-
-        this.estado = EstadoFactura.PAGADA;
-        this.fechaPago = LocalDate.now();
-        this.usuarioPago = usuarioPago;
-    }
-
-    /**
-     * Verifica si la factura puede pagarse.
-     */
-    public boolean puedePagarse() {
-        return estado.puedePagarse();
-    }
-
-    /**
-     * Anula la factura.
-     * HU-09: Ahora requiere motivo y usuario responsable (se crea NotaCredito).
-     */
-    public void anular(String motivo, String usuarioResponsable) {
-        if (estado == EstadoFactura.PAGADA) {
-            throw new IllegalStateException("No se puede anular una factura pagada");
-        }
-        if (estado == EstadoFactura.ANULADA) {
-            throw new IllegalStateException("La factura ya está anulada. No se puede aplicar doble anulación");
-        }
-        if (estado != EstadoFactura.EMITIDA) {
-            throw new IllegalStateException("Solo se pueden anular facturas en estado EMITIDA");
-        }
+    @PrePersist
+    public void prePersist() {
+        if (this.fechaEmision == null) this.fechaEmision = LocalDateTime.now();
+        if (this.estado == null) this.estado = EstadoFactura.EMITIDA;
         
-        this.estado = EstadoFactura.ANULADA;
-        
-        // HU-09: Crear nota de crédito
-        NotaCredito nc = NotaCredito.builder()
-            .factura(this)
-            .monto(this.montoTotal)
-            .motivo(motivo)
-            .usuarioResponsable(usuarioResponsable)
-            .build();
-        
-        this.notaCredito = nc;
-    }
-
-    /**
-     * Verifica si la factura está pagada.
-     */
-    public boolean estaPagada() {
-        return estado == EstadoFactura.PAGADA;
-    }
-
-    /**
-     * HU-12: Calcula el total pagado hasta el momento.
-     */
-    public BigDecimal calcularTotalPagado() {
-        return pagos.stream()
-            .map(Pago::getMonto)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    /**
-     * HU-12: Calcula el saldo pendiente de la factura.
-     */
-    public BigDecimal calcularSaldoPendiente() {
-        return montoTotal.subtract(calcularTotalPagado());
-    }
-
-    /**
-     * HU-12: Verifica si la factura tiene saldo pendiente.
-     */
-    public boolean tieneSaldoPendiente() {
-        return calcularSaldoPendiente().compareTo(BigDecimal.ZERO) > 0;
-    }
-
-    /**
-     * HU-12: Registra un pago parcial.
-     * @param montoPago Monto a pagar
-     * @param usuario Usuario que registra
-     * @param observaciones Observaciones opcionales
-     * @return El pago creado
-     */
-    public Pago registrarPagoParcial(BigDecimal montoPago, String usuario, String observaciones) {
-        // Validar estado
-        if (!puedePagarse()) {
-            throw new IllegalStateException(
-                "La factura no puede recibir pagos. Estado actual: " + estado.getDescripcion());
-        }
-
-        // Validar monto
-        if (montoPago == null || montoPago.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("El monto debe ser mayor a cero");
-        }
-
-        BigDecimal saldoPendiente = calcularSaldoPendiente();
-        if (montoPago.compareTo(saldoPendiente) > 0) {
-            throw new IllegalArgumentException(
-                String.format("El monto ($%.2f) excede el saldo pendiente ($%.2f)", 
-                    montoPago, saldoPendiente));
-        }
-
-        // Crear el pago
-        Pago pago = Pago.builder()
-            .factura(this)
-            .monto(montoPago)
-            .usuario(usuario)
-            .observaciones(observaciones)
-            .esPagoTotal(false)
-            .build();
-
-        pagos.add(pago);
-
-        // Verificar si se completó el pago
-        BigDecimal nuevoSaldo = calcularSaldoPendiente();
-        if (nuevoSaldo.compareTo(BigDecimal.ZERO) == 0) {
-            this.estado = EstadoFactura.PAGADA;
-            this.fechaPago = LocalDate.now();
-            this.usuarioPago = usuario;
-        } else if (this.estado == EstadoFactura.EMITIDA) {
-            // Cambiar a pendiente de pago si era emitida
-            this.estado = EstadoFactura.PENDIENTE_PAGO;
-        }
-
-        return pago;
-    }
-
-    /**
-     * Genera el número de factura basado en el ID.
-     * Formato: FACT-YYYYMMDD-00000ID
-     */
-    public void generarNumeroFactura() {
-        if (numeroFactura == null && id != null) {
-            String fecha = fechaEmision.toString().replace("-", "");
-            numeroFactura = String.format("FACT-%s-%05d", fecha, id);
+        // CALCULAR LETRA AUTOMÁTICAMENTE AL GUARDAR
+        if (this.tipoComprobante == null && this.cliente != null) {
+            this.tipoComprobante = TipoComprobante.getTipoFactura(this.cliente.getCondicionFiscal());
         }
     }
+    
+    /**
+     * Calcula el total de IVA de toda la factura.
+     */
+    public BigDecimal getMontoTotalIVA() {
+        return detalles.stream()
+                .map(DetalleFactura::getMontoIva)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Calcula el total neto (sin IVA) de toda la factura.
+     */
+    public BigDecimal getMontoTotalNeto() {
+        // Total Neto = Total Final - Total IVA
+        return this.total.subtract(getMontoTotalIVA());
+    }
+
+    // Métodos de compatibilidad para MovimientoCuentaCorriente
+    public BigDecimal getMontoTotal() { return this.total; }
+    public Long getNumeroFactura() { return this.id; }
 }

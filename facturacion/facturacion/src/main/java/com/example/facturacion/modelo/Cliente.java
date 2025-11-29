@@ -1,14 +1,36 @@
 package com.example.facturacion.modelo;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
-import com.example.facturacion.modelo.enums.CondicionFiscal;
-import com.example.facturacion.modelo.enums.EstadoCliente;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.example.facturacion.modelo.enums.CondicionFiscal;
+import com.example.facturacion.modelo.enums.EstadoCliente;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Modelo de entidad Cliente con Cuenta Corriente integrada.
@@ -166,17 +188,26 @@ public class Cliente {
      * @param movimiento Movimiento a registrar
      */
     public void registrarMovimiento(MovimientoCuentaCorriente movimiento) {
-        if (movimiento == null) {
-            throw new IllegalArgumentException("El movimiento no puede ser nulo");
-        }
-        
         movimiento.setCliente(this);
         this.movimientos.add(movimiento);
         
-        // Actualizar saldo según el tipo de movimiento
-        this.saldoCuentaCorriente = this.saldoCuentaCorriente.add(movimiento.calcularImpactoEnSaldo());
+        // LÓGICA DE SALDO SEGÚN TU ENUM
+        switch (movimiento.getTipoMovimiento()) {
+            case FACTURA:
+            case CARGO:
+                // Aumenta la deuda del cliente
+                this.saldoCuentaCorriente = this.saldoCuentaCorriente.add(movimiento.getMonto());
+                break;
+            case PAGO:
+            case CREDITO:
+            case ANULACION: 
+                // Disminuye la deuda del cliente
+                this.saldoCuentaCorriente = this.saldoCuentaCorriente.subtract(movimiento.getMonto());
+                break;
+        }
+        
+        // movimiento.setSaldoHistorico(this.saldoCuentaCorriente); 
     }
-
     /**
      * Calcula el saldo actual sumando todos los movimientos.
      */
@@ -203,14 +234,17 @@ public class Cliente {
     /**
      * Verifica si el cliente tiene deuda.
      */
-    public boolean tieneDeuda() {
-        return saldoCuentaCorriente.compareTo(BigDecimal.ZERO) < 0;
+public boolean tieneDeuda() {
+        // ANTES: return saldoCuentaCorriente.compareTo(BigDecimal.ZERO) < 0;
+        // AHORA:
+        return saldoCuentaCorriente.compareTo(BigDecimal.ZERO) > 0;
     }
 
     /**
-     * Obtiene el monto de la deuda (valor absoluto si es negativo).
+     * Obtiene el monto de la deuda.
      */
     public BigDecimal getMontoDeuda() {
-        return tieneDeuda() ? saldoCuentaCorriente.abs() : BigDecimal.ZERO;
+        // Si tiene deuda (>0), retornamos el saldo tal cual. Si es a favor (<0), deuda es 0.
+        return tieneDeuda() ? saldoCuentaCorriente : BigDecimal.ZERO;
     }
-}   
+}

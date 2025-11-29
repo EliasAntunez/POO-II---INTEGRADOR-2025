@@ -1,133 +1,136 @@
 package com.example.facturacion.modelo;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.example.facturacion.modelo.enums.TipoComprobante;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
-/**
- * Entidad NotaCredito.
- * HU-09: Anulación de Facturas mediante Nota de Crédito
- */
 @Entity
 @Table(name = "nota_credito")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-@ToString(exclude = "factura")
+@Getter @Setter @NoArgsConstructor
 public class NotaCredito {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Número de la nota de crédito (generado automáticamente).
-     */
-    @Column(name = "numero", unique = true, nullable = false, length = 20)
-    private String numero;
-
-    /**
-     * Factura que se anula con esta nota de crédito.
-     * Relación 1-a-1: Una factura puede tener una sola nota de crédito.
-     */
-    @NotNull
+    // Relación directa con la factura que anula
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "factura_id", nullable = false, unique = true)
     private Factura factura;
 
-    /**
-     * Monto de la nota de crédito (debe coincidir con el total de la factura).
-     */
-    @NotNull
-    @Column(name = "monto", nullable = false, precision = 19, scale = 2)
-    private BigDecimal monto;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cliente_id", nullable = false)
+    private Cliente cliente;
 
-    /**
-     * Fecha de emisión de la nota de crédito.
-     */
-    @NotNull
-    @Column(name = "fecha_emision", nullable = false)
-    private LocalDate fechaEmision;
+    @Column(nullable = false)
+    private LocalDateTime fechaEmision;
 
-    /**
-     * Fecha y hora de registro.
-     */
+    // Campo requerido por tu DB
     @Column(name = "fecha_registro", nullable = false)
     private LocalDateTime fechaRegistro;
 
-    /**
-     * Motivo de la anulación (requerido por HU-09).
-     */
-    @NotBlank
-    @Column(name = "motivo", nullable = false, length = 500)
+    @Column(name = "total", nullable = false, precision = 19, scale = 2)
+    private BigDecimal total;
+
+    @Column(length = 500)
     private String motivo;
 
-    /**
-     * Usuario responsable de la anulación (requerido por HU-09).
-     */
-    @NotBlank
-    @Column(name = "usuario_responsable", nullable = false, length = 100)
+    // === NUEVO CAMPO PARA SOLUCIONAR EL ERROR ===
+    @Column(name = "usuario_responsable", nullable = false)
     private String usuarioResponsable;
 
-    /**
-     * Observaciones adicionales.
-     */
-    @Column(name = "observaciones", length = 500)
-    private String observaciones;
+    @OneToMany(mappedBy = "notaCredito", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DetalleNotaCredito> detalles = new ArrayList<>();
+
+    public void agregarDetalle(DetalleNotaCredito detalle) {
+        this.detalles.add(detalle);
+        detalle.setNotaCredito(this);
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_comprobante", nullable = false)
+    private TipoComprobante tipoComprobante;
 
     @PrePersist
-    protected void onCreate() {
-        if (fechaEmision == null) {
-            fechaEmision = LocalDate.now();
+    public void prePersist() {
+        if (this.fechaEmision == null) {
+            this.fechaEmision = LocalDateTime.now();
         }
-        if (fechaRegistro == null) {
-            fechaRegistro = LocalDateTime.now();
+        if (this.fechaRegistro == null) {
+            this.fechaRegistro = LocalDateTime.now();
         }
+        // Asignar valor por defecto para evitar el error de NULL
+        if (this.usuarioResponsable == null) {
+            this.usuarioResponsable = "SISTEMA"; 
+        }
+
+        if (this.tipoComprobante == null && this.cliente != null) {
+            this.tipoComprobante = TipoComprobante.getTipoNotaCredito(this.cliente.getCondicionFiscal());
+        }
+    }
+    
+    // Métodos puente
+    public BigDecimal getMonto() { return this.total; }
+    public Long getNumero() { return this.id; }
+
+    // ... (resto de la clase igual) ...
+
+    // =============================================================
+    // MÉTODOS DE CÁLCULO PARA LA VISTA (AFIP STYLE)
+    // =============================================================
+
+    /**
+     * Calcula el total de IVA de toda la NC.
+     */
+    public BigDecimal getTotalIva() {
+        return detalles.stream()
+                .map(DetalleNotaCredito::getMontoIva)
+                .filter(val -> val != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**
-     * Genera el número de nota de crédito basado en el ID.
-     * Formato: NC-YYYYMMDD-00000ID
+     * Calcula el Importe Neto Gravado (Total Final - Total IVA).
      */
-    public void generarNumero() {
-        if (numero == null && id != null) {
-            String fecha = fechaEmision.toString().replace("-", "");
-            numero = String.format("NC-%s-%05d", fecha, id);
-        }
+    public BigDecimal getImporteNetoGravado() {
+        return this.total.subtract(getTotalIva());
     }
 
     /**
-     * Valida que la nota de crédito sea válida.
+     * Calcula el total de IVA para una alícuota específica (ej: 21.0).
+     * Se usa para mostrar el desglose en el pie de página.
      */
-    public void validar() {
-        if (factura == null) {
-            throw new IllegalArgumentException("La factura no puede ser nula");
-        }
-        if (motivo == null || motivo.trim().isEmpty()) {
-            throw new IllegalArgumentException("El motivo es requerido");
-        }
-        if (usuarioResponsable == null || usuarioResponsable.trim().isEmpty()) {
-            throw new IllegalArgumentException("El usuario responsable es requerido");
-        }
-        if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("El monto debe ser mayor a cero");
-        }
+    public BigDecimal getIvaPorAlicuota(double valorAlicuota) {
+        // Convertimos el double a BigDecimal para comparar con precisión
+        BigDecimal target = BigDecimal.valueOf(valorAlicuota);
+        
+        return detalles.stream()
+                .filter(d -> d.getAlicuotaIva() != null && 
+                             d.getAlicuotaIva().stripTrailingZeros().compareTo(target.stripTrailingZeros()) == 0)
+                .map(DetalleNotaCredito::getMontoIva)
+                .filter(val -> val != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

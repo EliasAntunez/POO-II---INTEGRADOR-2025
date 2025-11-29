@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+<head>
+    <title>Nota de Crédito</title>
+</head>
+<body>
+<th:block th:fragment="content">
+
+    <style>
+        /* ================= ESTILOS IDENTICOS A LA FACTURA ================= */
+        .factura-container {
+            background: white;
+            padding: 30px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            font-size: 12px;
+        }
+
+        /* Cabecera con línea y caja de letra */
+        .header-line {
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .letra-box-container {
+            position: absolute; top: 25px; left: 50%; transform: translateX(-50%);
+            background: white; width: 60px; text-align: center;
+            border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;
+            z-index: 10; padding-bottom: 5px;
+        }
+        .letra { font-size: 36px; font-weight: bold; line-height: 36px; }
+        .codigo-letra { font-size: 10px; font-weight: bold; }
+
+        .header-row { display: flex; border-bottom: 1px solid black; }
+        .col-izq { width: 50%; padding: 20px 20px 10px 20px; border-right: 1px solid black; }
+        .col-der { width: 50%; padding: 20px 20px 10px 40px; }
+        .titulo-comprobante { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .data-label { font-weight: bold; }
+        
+        .codigo-comp {
+            font-size: 0.7rem;
+            display: block;
+            line-height: 10px;
+            margin-top: -5px;
+        }
+
+        .empresa-info {
+            font-size: 0.9rem;
+            border-right: 1px solid #ccc;
+        }
+
+        .factura-data {
+            font-size: 0.9rem;
+            padding-left: 20px;
+        }
+
+        .titulo-doc {
+            font-size: 1.5rem;
+            font-weight: bold;
+            /* Color distintivo para Nota de Crédito (opcional, si quieres que sean idénticas ponlo negro) */
+            color: #dc3545; 
+        }
+
+        .cliente-section {
+            border-top: 2px solid black;
+            border-bottom: 2px solid black;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .table-factura thead th {
+            background-color: #e9ecef;
+            border-bottom: 2px solid black;
+            border-top: 2px solid black;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+        
+        .table-factura tfoot td {
+            border-top: 2px solid black;
+        }
+
+        .actions-bar {
+            max-width: 1000px;
+            margin: 0 auto 20px auto;
+        }
+
+        /* ================= ESTILOS DE IMPRESIÓN ================= */
+        @media print {
+            body * { visibility: hidden; }
+            .sidebar, .navbar, header, footer, .actions-bar, .btn, #sidebar-wrapper { display: none !important; }
+            .factura-container, .factura-container * { visibility: visible; }
+            .factura-container {
+                position: absolute; left: 0; top: 0; width: 100% !important;
+                max-width: none !important; margin: 0 !important; padding: 20px !important;
+                border: none !important; box-shadow: none !important;
+            }
+            #wrapper { margin: 0 !important; padding: 0 !important; }
+            .content { margin: 0 !important; padding: 0 !important; background: white !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+
+    <div class="actions-bar d-flex justify-content-between align-items-center">
+        <a th:href="@{/facturas/ver/{id}(id=${nc.factura.id})}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a Factura
+        </a>
+        
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Imprimir Nota de Crédito
+        </button>
+    </div>
+
+    <div class="factura-container">
+        
+        <div class="row header-line pt-4">
+        <div class="letra-box-container">
+            <div class="letra" th:text="${nc.tipoComprobante.letra}">B</div>
+            <div class="codigo-letra" th:text="'COD. ' + ${nc.tipoComprobante.codigo}">COD. 08</div>
+        </div>
+
+            <div class="col-6 empresa-info pe-5">
+                <h2 class="fw-bold mb-0">FactuApp S.A.</h2>
+                <small class="fw-bold d-block mb-2">Facturación de Servicios</small>
+                
+                <p class="mb-0"><small><strong>Razón Social:</strong> FactuApp S.A.</small></p>
+                <p class="mb-0"><small><strong>Domicilio:</strong> Av. Libertador 1234, CABA</small></p>
+                <p class="mb-0"><small><strong>Condición IVA:</strong> Responsable Inscripto</small></p>
+            </div>
+
+            <div class="col-6 factura-data ps-5">
+                <div class="titulo-doc mb-2">NOTA DE CRÉDITO</div>
+                <div class="fs-5 mb-3">N° <span th:text="${'0001-' + #numbers.formatInteger(nc.id, 8)}">0001-00000001</span></div>
+                
+                <p class="mb-0"><strong>Fecha de Emisión:</strong> <span th:text="${#temporals.format(nc.fechaEmision, 'dd/MM/yyyy')}"></span></p>
+                <p class="mb-0"><strong>Anula Comprobante:</strong> Factura N° <span th:text="${#numbers.formatInteger(nc.factura.id, 8)}"></span></p>
+                <p class="mb-0"><strong>CUIT:</strong> 30-11223344-5</p>
+                <p class="mb-0"><strong>Ingresos Brutos:</strong> 901-283812</p>
+            </div>
+        </div>
+
+        <div class="cliente-section">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="mb-1"><strong>Señor/es:</strong> <span th:text="${nc.cliente.razonSocial}"></span></p>
+                    <p class="mb-1"><strong>Domicilio:</strong> <span th:text="${nc.cliente.direccion}"></span></p>
+                    <p class="mb-0"><strong>Condición IVA:</strong> <span th:text="${nc.cliente.condicionFiscal.descripcion}"></span></p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1"><strong>CUIT:</strong> <span th:text="${nc.cliente.cuit}"></span></p>
+                    <p class="mb-1"><strong>Cond. Venta:</strong> Cuenta Corriente</p>
+                    <p class="mb-0 fst-italic text-muted">Ref: <span th:text="${nc.motivo}"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive" style="min-height: 250px;">
+            <table class="table table-borderless table-factura">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 80px;">Cant.</th>
+                        <th>Descripción / Servicio</th>
+                        <th class="text-end" style="width: 150px;">P. Unitario</th>
+                        <th class="text-center" style="width: 80px;">IVA</th>
+                        <th class="text-end" style="width: 150px;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="detalle : ${nc.detalles}">
+                        <td class="text-center" th:text="${detalle.cantidad}"></td>
+                        <td>
+                            <strong th:text="${detalle.servicio.nombre}"></strong>
+                            <div class="small text-muted fst-italic" th:text="${detalle.servicio.descripcion}"></div>
+                        </td>
+                        <td class="text-end" th:text="${'$ ' + #numbers.formatDecimal(detalle.precioUnitario, 1, 'POINT', 2, 'COMMA')}"></td>
+                        <td class="text-center" th:text="${#numbers.formatDecimal(detalle.alicuotaIva, 1, 'POINT', 0, 'COMMA') + '%'}"></td>
+                        <td class="text-end" th:text="${'$ ' + #numbers.formatDecimal(detalle.subtotal, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-8">
+                <div class="border p-2">
+                    <small><strong>Son:</strong> Pesos Argentinos (Reintegro).</small>
+                    <div class="mt-2">
+                        <i class="bi bi-qr-code" style="font-size: 3rem;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="text-end text-muted">Subtotal Neto:</td>
+                        <td class="text-end" th:text="${'$ ' + #numbers.formatDecimal(nc.importeNetoGravado, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-end text-muted">IVA Total:</td>
+                        <td class="text-end" th:text="${'$ ' + #numbers.formatDecimal(nc.totalIva, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                    <tr class="border-top border-dark border-2">
+                        <td class="text-end fs-5 fw-bold text-danger">TOTAL REINTEGRO:</td>
+                        <td class="text-end fs-5 fw-bold text-danger" th:text="${'-$ ' + #numbers.formatDecimal(nc.total, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="row mt-4 pt-2 border-top">
+            <div class="col-6">
+                <small class="text-muted">C.A.I.: 12345678901234</small>
+            </div>
+            <div class="col-6 text-end">
+                <small class="text-muted">Fecha Vto. C.A.I.: 31/12/2030</small>
+            </div>
+        </div>
+
+    </div>
+
+</th:block>
+</body>
+</html>

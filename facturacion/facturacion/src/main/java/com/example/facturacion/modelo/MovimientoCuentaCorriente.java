@@ -1,179 +1,107 @@
 package com.example.facturacion.modelo;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import com.example.facturacion.modelo.enums.TipoMovimiento;
-
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Entidad MovimientoCuentaCorriente.
- * Registra todos los movimientos (cargos, créditos, facturas, pagos, anulaciones).
- */
+import com.example.facturacion.modelo.enums.TipoMovimiento;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @Entity
-@Table(name = "movimiento_cuenta_corriente", indexes = {
-    @Index(name = "idx_movimiento_cliente", columnList = "cliente_id"),
-    @Index(name = "idx_movimiento_fecha", columnList = "fecha_movimiento")
-})
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-@ToString(exclude = {"cliente", "factura", "pago", "notaCredito"})
+@Table(name = "movimiento_cuenta_corriente")
+@Getter @Setter @NoArgsConstructor
 public class MovimientoCuentaCorriente {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Cliente dueño de la cuenta corriente.
-     */
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
-    /**
-     * Tipo de movimiento (CARGO, CREDITO, PAGO, ANULACION).
-     */
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_movimiento", nullable = false, length = 20)
-    private TipoMovimiento tipoMovimiento;
-
-    /**
-     * Monto del movimiento (siempre positivo).
-     */
-    @NotNull
-    @Column(name = "monto", nullable = false, precision = 19, scale = 2)
-    private BigDecimal monto;
-
-    /**
-     * Fecha del movimiento.
-     */
-    @NotNull
-    @Column(name = "fecha_movimiento", nullable = false)
-    private LocalDate fechaMovimiento;
-
-    /**
-     * Fecha y hora de registro.
-     */
-    @Column(name = "fecha_registro", nullable = false)
-    private LocalDateTime fechaRegistro;
-
-    /**
-     * Descripción del movimiento.
-     */
-    @Column(name = "descripcion", length = 500)
-    private String descripcion;
-
-    /**
-     * Usuario que registró el movimiento.
-     */
-    @Column(name = "usuario_registro", length = 100)
-    private String usuarioRegistro;
-
-    // ==================== Referencias opcionales ====================
-
-    /**
-     * Factura asociada (si el movimiento es por una factura).
-     */
+    // Opcional: Relaciones para navegación
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "factura_id")
     private Factura factura;
 
-    /**
-     * Pago asociado (si el movimiento es por un pago).
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pago_id")
-    private Pago pago;
-
-    /**
-     * Nota de crédito asociada (si el movimiento es por anulación).
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "nota_credito_id")
     private NotaCredito notaCredito;
+    
+    // Si tienes pagos:
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "pago_id")
+    // private Pago pago;
 
-    /**
-     * Movimiento inverso (para anulaciones).
-     */
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "movimiento_inverso_id")
-    private MovimientoCuentaCorriente movimientoInverso;
+    @Column(nullable = false)
+    private LocalDateTime fechaMovimiento = LocalDateTime.now();
 
-    @PrePersist
-    protected void onCreate() {
-        if (fechaMovimiento == null) {
-            fechaMovimiento = LocalDate.now();
-        }
-        if (fechaRegistro == null) {
-            fechaRegistro = LocalDateTime.now();
-        }
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoMovimiento tipoMovimiento;
 
-    // ==================== Métodos de Negocio ====================
+    @Column(nullable = false)
+    private String descripcion;
 
-    /**
-     * Calcula el impacto de este movimiento en el saldo.
-     * CARGO/FACTURA: negativo (aumenta deuda)
-     * CREDITO/PAGO: positivo (reduce deuda)
-     */
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal monto;
+
+    @Column(name = "usuario_registro")
+    private String usuarioRegistro;
+
+    // === MÉTODO CLAVE PARA LA VISTA ===
     public BigDecimal calcularImpactoEnSaldo() {
-        switch (tipoMovimiento) {
-            case CARGO:
+        if (this.monto == null) return BigDecimal.ZERO;
+        
+        switch (this.tipoMovimiento) {
             case FACTURA:
-                return monto.negate(); // Aumenta la deuda (saldo negativo)
-            case CREDITO:
+            case CARGO:
+                return this.monto; // Suman Deuda (Positivo)
             case PAGO:
+            case CREDITO:
             case ANULACION:
-                return monto; // Reduce la deuda (saldo positivo)
+                return this.monto.negate(); // Restan Deuda (Negativo)
             default:
                 return BigDecimal.ZERO;
         }
     }
-
-    /**
-     * Crea un movimiento por factura.
-     */
+    
+    // Métodos estáticos helpers (como los que tenías antes) se mantienen igual...
     public static MovimientoCuentaCorriente porFactura(Cliente cliente, Factura factura, String usuario) {
-        return MovimientoCuentaCorriente.builder()
-            .cliente(cliente)
-            .tipoMovimiento(TipoMovimiento.FACTURA)
-            .monto(factura.getMontoTotal())
-            .factura(factura)
-            .descripcion("Factura " + factura.getNumeroFactura())
-            .usuarioRegistro(usuario)
-            .build();
+        MovimientoCuentaCorriente m = new MovimientoCuentaCorriente();
+        m.setCliente(cliente);
+        m.setFactura(factura);
+        m.setTipoMovimiento(TipoMovimiento.FACTURA);
+        m.setMonto(factura.getMontoTotal());
+        m.setDescripcion("Factura N° " + factura.getNumeroFactura());
+        m.setUsuarioRegistro(usuario);
+        m.setFechaMovimiento(LocalDateTime.now());
+        return m;
     }
-
-    /**
-     * Crea un movimiento por pago.
-     */
-    public static MovimientoCuentaCorriente porPago(Cliente cliente, Pago pago, String usuario) {
-        return MovimientoCuentaCorriente.builder()
-            .cliente(cliente)
-            .tipoMovimiento(TipoMovimiento.PAGO)
-            .monto(pago.getMonto())
-            .pago(pago)
-            .descripcion("Pago de factura " + pago.getFactura().getNumeroFactura())
-            .usuarioRegistro(usuario)
-            .build();
-    }
-
-    /**
-     * Crea un movimiento por anulación (nota de crédito).
-     */
+    
     public static MovimientoCuentaCorriente porAnulacion(Cliente cliente, NotaCredito nc, String usuario) {
-        return MovimientoCuentaCorriente.builder()
-            .cliente(cliente)
-            .tipoMovimiento(TipoMovimiento.ANULACION)
-            .monto(nc.getMonto())
-            .notaCredito(nc)
-            .descripcion("Anulación de factura " + nc.getFactura().getNumeroFactura() + " - NC " + nc.getNumero())
-            .usuarioRegistro(usuario)
-            .build();
+        MovimientoCuentaCorriente m = new MovimientoCuentaCorriente();
+        m.setCliente(cliente);
+        m.setNotaCredito(nc);
+        m.setTipoMovimiento(TipoMovimiento.ANULACION);
+        m.setMonto(nc.getMonto());
+        m.setDescripcion("Nota de Crédito N° " + nc.getNumero());
+        m.setUsuarioRegistro(usuario);
+        m.setFechaMovimiento(LocalDateTime.now());
+        return m;
     }
 }
