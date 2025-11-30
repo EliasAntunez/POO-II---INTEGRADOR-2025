@@ -38,9 +38,6 @@ public class ServicioFacturacion {
     @Autowired
     private ServicioCliente servicioCliente;
 
-    @Autowired
-    private ServicioServicio servicioServicio;
-
     // ==================== PROCESO MASIVO ====================
     @Transactional
     public int ejecutarFacturacionMasiva(LocalDate inicio, LocalDate fin) {
@@ -153,9 +150,20 @@ private Factura generarFacturaParaCliente(Cliente cliente, List<ClienteServicio>
     
     // ==================== CONSULTAS ====================
     @Transactional(readOnly = true)
-    public Page<Factura> obtenerFacturasPaginadas(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fechaEmision"));
-        return repositorioFactura.findAllByOrderByFechaEmisionDesc(pageable);
+    public Page<Factura> obtenerFacturasFiltradas(String busqueda, EstadoFactura estado,
+                                                LocalDateTime fechaDesde, LocalDateTime fechaHasta,
+                                                int page, int size) {
+        
+        // CAMBIO AQUÍ: "fechaEmision" -> "id"
+        // Usamos DESC para que la factura N° 100 aparezca antes que la N° 99
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        
+        if ((busqueda == null || busqueda.isEmpty()) && estado == null && fechaDesde == null && fechaHasta == null) {
+            // También cambiar aquí si usas findAll
+            return repositorioFactura.findAll(pageable);
+        }
+        
+        return repositorioFactura.buscarConFiltros(busqueda, estado, fechaDesde, fechaHasta, pageable);
     }
     
     @Transactional(readOnly = true)

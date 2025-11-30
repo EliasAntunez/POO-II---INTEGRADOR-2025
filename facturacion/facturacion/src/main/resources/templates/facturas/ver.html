@@ -106,9 +106,9 @@
     </style>
 
     <div class="actions-bar d-flex justify-content-between align-items-center">
-        <a th:href="@{/facturas/listar}" class="btn btn-outline-secondary">
+        <button onclick="history.back()" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Volver
-        </a>
+        </button>
         
         <div class="d-flex gap-2">
             <a th:if="${factura.anulada}" 

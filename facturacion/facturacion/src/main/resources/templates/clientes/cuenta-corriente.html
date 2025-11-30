@@ -185,7 +185,6 @@
                             <th style="width: 40%;">Descripción</th>
                             <th class="text-end" style="width: 10%;">Monto</th>
                             <th class="text-end" style="width: 10%;">Impacto</th>
-                            <th class="text-center" style="width: 10%;">Usuario</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -216,8 +215,6 @@
                                     <span th:text="${#numbers.formatDecimal(mov.calcularImpactoEnSaldo(), 1, 'POINT', 2, 'COMMA')}"></span>
                                 </span>
                             </td>
-                            
-                            <td class="text-center small text-muted" th:text="${mov.usuarioRegistro}"></td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(movimientos)}">
                             <td colspan="7" class="text-center py-5 text-muted">No hay movimientos registrados.</td>
