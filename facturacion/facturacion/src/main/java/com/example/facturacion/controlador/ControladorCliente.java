@@ -1,5 +1,6 @@
 package com.example.facturacion.controlador;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.facturacion.modelo.Cliente;
+import com.example.facturacion.modelo.MovimientoCuentaCorriente;
 import com.example.facturacion.modelo.enums.CondicionFiscal;
 import com.example.facturacion.modelo.enums.EstadoCliente;
 import com.example.facturacion.servicio.ServicioCliente;
@@ -276,21 +278,19 @@ redirectAttrs.addFlashAttribute("error", ex.getMessage());
      * Muestra el detalle de la cuenta corriente de un cliente.
      */
     @GetMapping("/cuenta-corriente/{id}")
-    public String verCuentaCorriente(
-            @PathVariable("id") Long id,
-            Model model,
-            RedirectAttributes redirectAttrs) {
-        
+    public String verCuentaCorriente(@PathVariable("id") Long id, Model model, RedirectAttributes redirectAttrs) {
         try {
             Cliente cliente = servicioCliente.obtenerClientePorId(id);
-            var movimientos = servicioCliente.obtenerMovimientosCliente(id);
+            
+            // ESTA ES LA CLAVE: Llamar al servicio que trae la lista fresca y ordenada
+            List<MovimientoCuentaCorriente> movimientos = servicioCliente.obtenerMovimientosCliente(id);
             
             model.addAttribute("cliente", cliente);
-            model.addAttribute("movimientos", movimientos);
+            // Inyectamos la lista explícita "movimientos" que el HTML espera
+            model.addAttribute("movimientos", movimientos); 
             model.addAttribute("saldo", cliente.getSaldoCuentaCorriente());
             
             return "clientes/cuenta-corriente";
-            
         } catch (IllegalArgumentException ex) {
             redirectAttrs.addFlashAttribute("error", ex.getMessage());
             return "redirect:/clientes/listar";

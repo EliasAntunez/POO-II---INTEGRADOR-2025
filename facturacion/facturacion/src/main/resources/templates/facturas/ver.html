@@ -117,13 +117,14 @@
                 <i class="bi bi-file-earmark-break"></i> Ver Nota de Crédito
             </a>
             <form th:if="${!factura.anulada}" 
-                  th:action="@{/facturas/anular/{id}(id=${factura.id})}" 
-                  method="post"
-                  onsubmit="return confirm('¿Está seguro de ANULAR esta factura? Esta acción es irreversible.');">
+                th:action="@{/facturas/anular/{id}(id=${factura.id})}" 
+                method="post"
+                onsubmit="if(confirm('¿Está seguro de ANULAR esta factura?')) { this.querySelector('button').disabled = true; this.querySelector('button').innerHTML = 'Procesando...'; return true; } else { return false; }">
                 <button type="submit" class="btn btn-danger">
                     <i class="bi bi-x-circle"></i> Anular Factura
                 </button>
             </form>
+            
 
             <button onclick="window.print()" class="btn btn-primary">
                 <i class="bi bi-printer"></i> Imprimir

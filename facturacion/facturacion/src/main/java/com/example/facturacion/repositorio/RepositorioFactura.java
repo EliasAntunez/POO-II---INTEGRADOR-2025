@@ -1,5 +1,6 @@
 package com.example.facturacion.repositorio;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -15,18 +16,28 @@ import com.example.facturacion.modelo.enums.EstadoFactura;
 
 @Repository
 public interface RepositorioFactura extends JpaRepository<Factura, Long> {
+    
+    @Query("SELECT f FROM Factura f WHERE " +
+           "(" +
+               ":busqueda IS NULL OR :busqueda = '' OR " +
+               "LOWER(f.cliente.razonSocial) LIKE LOWER(CONCAT('%', :busqueda, '%')) OR " +
+               "LOWER(f.cliente.nombre) LIKE LOWER(CONCAT('%', :busqueda, '%')) OR " +
+               "LOWER(f.cliente.apellido) LIKE LOWER(CONCAT('%', :busqueda, '%')) OR " +
+               "f.cliente.cuit LIKE CONCAT('%', :busqueda, '%') OR " +
+               "f.cliente.dni LIKE CONCAT('%', :busqueda, '%')" +
+           ") " +
+           "AND (:estado IS NULL OR f.estado = :estado) " +
+           "AND (cast(:fechaDesde as timestamp) IS NULL OR f.fechaEmision >= :fechaDesde) " +
+           "AND (cast(:fechaHasta as timestamp) IS NULL OR f.fechaEmision <= :fechaHasta)")
+    Page<Factura> buscarConFiltros(
+            @Param("busqueda") String busqueda,
+            @Param("estado") EstadoFactura estado,
+            @Param("fechaDesde") LocalDateTime fechaDesde,
+            @Param("fechaHasta") LocalDateTime fechaHasta,
+            Pageable pageable
+    );
+    
     List<Factura> findByCliente(Cliente cliente);
     Page<Factura> findByCliente(Cliente cliente, Pageable pageable);
     Page<Factura> findAllByOrderByFechaEmisionDesc(Pageable pageable);
-
-    @Query("SELECT f FROM Factura f WHERE " +
-           "(:busqueda IS NULL OR LOWER(f.cliente.razonSocial) LIKE LOWER(CONCAT('%', :busqueda, '%')) OR " +
-           "f.cliente.cuit LIKE CONCAT('%', :busqueda, '%') OR " +
-           "f.cliente.nombre LIKE CONCAT('%', :busqueda, '%')) AND " +
-           "(:estado IS NULL OR f.estado = :estado)")
-    Page<Factura> buscarConFiltrosTexto(
-            @Param("busqueda") String busqueda,
-            @Param("estado") EstadoFactura estado,
-            Pageable pageable
-    );
 }

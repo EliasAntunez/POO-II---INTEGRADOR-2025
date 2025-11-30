@@ -273,12 +273,19 @@
          * Registra un movimiento manual en la cuenta corriente.
          */
         @Transactional
-        public MovimientoCuentaCorriente registrarMovimiento(
-                Long clienteId, MovimientoCuentaCorriente movimiento) {
+        public MovimientoCuentaCorriente registrarMovimiento(Long clienteId, MovimientoCuentaCorriente movimiento) {
             Cliente cliente = obtenerClientePorId(clienteId);
+            
+            // 1. Agregar a la lista y actualizar el saldo en memoria
             cliente.registrarMovimiento(movimiento);
+            
+            // 2. Guardar Cliente
+            // Al tener CascadeType.ALL, esto actualiza el saldo del cliente en la DB
+            // Y TAMBIÉN inserta el movimiento automáticamente.
             repositorioCliente.save(cliente);
-            return repositorioMovimiento.save(movimiento);
+            
+            return movimiento; 
+            // NO llamamos a repositorioMovimiento.save(movimiento) aquí.
         }
         
         /**

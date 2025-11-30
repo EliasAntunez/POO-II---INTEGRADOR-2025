@@ -55,6 +55,24 @@
             margin-bottom: 20px;
             overflow: hidden;
         }
+        
+        /* SCROLL FIX */
+        .table-responsive {
+            overflow-x: auto;
+            overflow-y: visible;
+            max-height: none !important;
+            height: auto !important;
+        }
+
+        /* Estilos de texto y badges */
+        .client-name { font-weight: bold; color: #000; display: block; }
+        .client-cuit { font-size: 0.85rem; color: #6c757d; }
+        .total-amount { font-weight: 700; font-size: 1rem; }
+        
+        .badge-emitida { background-color: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
+        .badge-anulada { background-color: #dc3545; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
+        .badge-pendiente { background-color: #ffc107; color: black; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
+        .badge-pagada { background-color: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
     </style>
 
     <div class="d-flex align-items-center mb-3">
@@ -62,8 +80,6 @@
         <h2 class="mb-0 fw-bold">Gestión de Facturas</h2>
     </div>
 
-    <!-- Falta arreglar lo de los filtros y seguramente la paginación. No andan JAJA
-                        ya a esta altura no me sorprende, igual -->
     <div class="search-container">
         <form th:action="@{/facturas/listar}" method="get">
             <div class="row g-3 align-items-end">
@@ -84,7 +100,8 @@
                     <div class="input-group">
                         <input type="text" name="busqueda" class="form-control" 
                                placeholder="Nombre, DNI, CUIT, Email..." 
-                               th:value="${busqueda}"> <button type="submit" class="btn btn-primary px-4">
+                               th:value="${busqueda}"> 
+                        <button type="submit" class="btn btn-primary px-4">
                             <i class="bi bi-search me-2"></i> Buscar
                         </button>
                     </div>
@@ -97,6 +114,10 @@
         <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${exito}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
+    <div th:if="${info}" class="alert alert-info alert-dismissible fade show">
+        <i class="bi bi-info-circle-fill me-2"></i> <span th:text="${info}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
         <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -107,7 +128,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light border-bottom">
                     <tr>
-                        <th class="text-center" style="width: 5%;">#</th>
+                        <th class="text-center" style="width: 5%;">N° Factura</th>
                         <th style="width: 20%;">Fecha Emisión</th>
                         <th style="width: 35%;">Cliente</th>
                         <th class="text-end" style="width: 15%;">Total</th>
@@ -117,21 +138,26 @@
                 </thead>
                 <tbody>
                     <tr th:each="factura : ${facturasPage.content}">
-                        <td class="text-center text-muted" th:text="${factura.id}"></td>
+                        <td class="text-center text-muted small" th:text="${factura.id}"></td>
+                        
                         <td th:text="${#temporals.format(factura.fechaEmision, 'dd/MM/yyyy HH:mm')}"></td>
+                        
                         <td>
                             <div class="fw-bold text-dark" th:text="${factura.cliente.razonSocial}"></div>
                             <small class="text-muted" th:text="${factura.cliente.cuit}"></small>
                         </td>
-                        <td class="text-end fw-bold">
+                        
+                        <td class="text-end total-amount">
                             <span th:text="${'$ ' + #numbers.formatDecimal(factura.total, 1, 'POINT', 2, 'COMMA')}"></span>
                         </td>
+                        
                         <td class="text-center">
-                            <span th:if="${factura.estado.name() == 'EMITIDA'}" class="badge bg-success rounded-pill">EMITIDA</span>
-                            <span th:if="${factura.estado.name() == 'ANULADA'}" class="badge bg-danger rounded-pill">ANULADA</span>
-                            <span th:if="${factura.estado.name() == 'PENDIENTE_PAGO'}" class="badge bg-warning text-dark rounded-pill">PENDIENTE</span>
-                            <span th:if="${factura.estado.name() == 'PAGADA'}" class="badge bg-primary rounded-pill">PAGADA</span>
+                            <span th:if="${factura.estado.name() == 'EMITIDA'}" class="badge-emitida">EMITIDA</span>
+                            <span th:if="${factura.estado.name() == 'ANULADA'}" class="badge-anulada">ANULADA</span>
+                            <span th:if="${factura.estado.name() == 'PENDIENTE_PAGO'}" class="badge-pendiente">PENDIENTE</span>
+                            <span th:if="${factura.estado.name() == 'PAGADA'}" class="badge-pagada">PAGADA</span>
                         </td>
+                        
                         <td class="text-end">
                             <a th:href="@{/facturas/ver/{id}(id=${factura.id})}" 
                                class="btn btn-sm btn-outline-primary" title="Ver Factura">
@@ -147,6 +173,12 @@
                                     </button>
                                 </form>
                             </span>
+                            
+                            <a th:if="${factura.estado.name() == 'ANULADA'}" 
+                               th:href="@{/facturas/ver-nota-credito/factura/{id}(id=${factura.id})}"
+                               class="btn btn-sm btn-outline-warning ms-1" title="Ver Nota de Crédito">
+                                <i class="bi bi-file-earmark-break"></i>
+                            </a>
                         </td>
                     </tr>
                     <tr th:if="${facturasPage.empty}">
@@ -159,23 +191,40 @@
         </div>
         
         <div class="card-footer bg-white border-top py-3" th:if="${facturasPage.totalPages > 1}">
-            <nav>
-                <ul class="pagination justify-content-center mb-0">
+            <nav aria-label="Paginación facturas" class="d-flex justify-content-center mt-2">
+                <ul class="pagination mb-0">
+                    
                     <li class="page-item" th:classappend="${!facturasPage.hasPrevious()} ? 'disabled'">
-                        <a class="page-link" th:href="@{/facturas/listar(page=${facturasPage.number - 1}, estado=${estadoSeleccionado}, busqueda=${busqueda})}">«</a>
+                        <a class="page-link" 
+                           th:href="@{/facturas/listar(page=${facturasPage.number - 1}, size=${facturasPage.size}, estado=${estadoSeleccionado}, busqueda=${busqueda}, fechaDesde=${fechaDesdeSeleccionada}, fechaHasta=${fechaHastaSeleccionada})}" 
+                           aria-label="Anterior">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
                     </li>
-                    <li class="page-item disabled">
-                        <span class="page-link" th:text="${(facturasPage.number + 1)}"></span>
+                    
+                    <li class="page-item" 
+                        th:each="i : ${#numbers.sequence(0, facturasPage.totalPages - 1)}" 
+                        th:classappend="${i == facturasPage.number} ? 'active'">
+                        <a class="page-link" 
+                           th:href="@{/facturas/listar(page=${i}, size=${facturasPage.size}, estado=${estadoSeleccionado}, busqueda=${busqueda}, fechaDesde=${fechaDesdeSeleccionada}, fechaHasta=${fechaHastaSeleccionada})}" 
+                           th:text="${i + 1}">
+                        </a>
                     </li>
+                    
                     <li class="page-item" th:classappend="${!facturasPage.hasNext()} ? 'disabled'">
-                        <a class="page-link" th:href="@{/facturas/listar(page=${facturasPage.number + 1}, estado=${estadoSeleccionado}, busqueda=${busqueda})}">»</a>
+                        <a class="page-link" 
+                           th:href="@{/facturas/listar(page=${facturasPage.number + 1}, size=${facturasPage.size}, estado=${estadoSeleccionado}, busqueda=${busqueda}, fechaDesde=${fechaDesdeSeleccionada}, fechaHasta=${fechaHastaSeleccionada})}" 
+                           aria-label="Siguiente">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
                     </li>
+                    
                 </ul>
             </nav>
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-4 mb-5">
         
         <div class="col-md-6">
             <div class="card h-100 shadow-sm border-0">

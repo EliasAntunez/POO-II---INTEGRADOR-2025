@@ -56,38 +56,34 @@ public class ControladorFactura {
                                  @RequestParam(value = "fechaDesde", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
                                  @RequestParam(value = "fechaHasta", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta) {
         
-        // Conversión de fechas para filtro
+        // 1. Preparar fechas (Inicio y Fin del día)
         LocalDateTime desde = (fechaDesde != null) ? fechaDesde.atStartOfDay() : null;
         LocalDateTime hasta = (fechaHasta != null) ? fechaHasta.atTime(LocalTime.MAX) : null;
 
-        // Llamada al servicio con filtros (necesitas crear este método en ServicioFacturacion si no existe, o usar el paginado simple por ahora)
-        // Por ahora usaré el método paginado simple si no tienes el filtro implementado en el servicio
-        Page<Factura> facturasPage;
+        // 2. LLAMADA CORREGIDA: Usamos el servicio de filtrado
+        Page<Factura> facturasPage = servicioFacturacion.obtenerFacturasFiltradas(busqueda, estado, desde, hasta, page, size);
         
-        // TODO: Idealmente deberías tener un método obtenerFacturasFiltradas en el servicio. 
-        // Si no lo tienes, usa obtenerFacturasPaginadas(page, size) pero los filtros no funcionarán en backend.
-        // Asumo que usaremos el básico por ahora para que compile:
-        facturasPage = servicioFacturacion.obtenerFacturasPaginadas(page, size);
-        
-        // Cargar datos para los COMBOS de la vista (ESTO FALTABA)
+        // 3. Cargar datos para los COMBOS de la vista
         model.addAttribute("listaClientes", servicioCliente.obtenerClientesActivos()); 
         model.addAttribute("listaEstados", EstadoFactura.values());
 
-        // Datos para la tabla y paginación
+        // 4. Pasar resultados a la vista
         model.addAttribute("facturasPage", facturasPage);
         model.addAttribute("facturas", facturasPage.getContent());
         
-        // Mantener valores de filtros seleccionados en la vista
+        // 5. Mantener los filtros seleccionados en la pantalla (para que no se borren al buscar)
         model.addAttribute("clienteIdSeleccionado", clienteId);
         model.addAttribute("estadoSeleccionado", estado);
         model.addAttribute("busqueda", busqueda);
+        model.addAttribute("fechaDesdeSeleccionada", fechaDesde); // Si usas filtro fecha
+        model.addAttribute("fechaHastaSeleccionada", fechaHasta); // Si usas filtro fecha
         
-        model.addAttribute("active", "facturas"); // Para resaltar menú
+        model.addAttribute("active", "facturas");
+        
         return "facturas/listar";
     }
 
-    // ==================== DETALLE ====================
-
+    // ... (El resto de métodos: ver, crear, anular, etc. quedan IGUAL que antes)
     @GetMapping("/ver/{id}")
     public String verFactura(@PathVariable("id") Long id, Model model, RedirectAttributes redirectAttrs) {
         try {
@@ -100,8 +96,6 @@ public class ControladorFactura {
             return "redirect:/facturas/listar";
         }
     }
-
-    // ==================== PROCESOS (POST) ====================
 
     @PostMapping("/generar-individual")
     public String procesarFacturacionIndividual(@RequestParam("clienteId") Long clienteId, 
@@ -121,19 +115,22 @@ public class ControladorFactura {
     }
 
     @PostMapping("/generar-masiva")
-    public String procesarFacturacionMasiva(@RequestParam("fechaInicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+    public String procesarFacturacionMasiva(
+            @RequestParam("fechaInicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam("fechaFin") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin,
             RedirectAttributes redirectAttrs) {
         try {
+            // Ahora los tipos coinciden (LocalDate)
             int cantidad = servicioFacturacion.ejecutarFacturacionMasiva(inicio, fin);
+            
             if (cantidad > 0) {
                 redirectAttrs.addFlashAttribute("exito", "Proceso masivo finalizado. Se generaron " + cantidad + " facturas.");
             } else {
-                redirectAttrs.addFlashAttribute("info", "El proceso finalizó sin generar facturas (no hay contratos pendientes).");
+                redirectAttrs.addFlashAttribute("info", "El proceso finalizó sin generar facturas.");
             }
         } catch (Exception ex) {
-            logger.error("Error en facturación masiva", ex);
-            redirectAttrs.addFlashAttribute("error", "Error crítico: " + ex.getMessage());
+            // logger.error("Error...", ex);
+            redirectAttrs.addFlashAttribute("error", "Error: " + ex.getMessage());
         }
         return "redirect:/facturas/listar";
     }
