@@ -105,16 +105,17 @@ public class NotaCredito {
      * Calcula el total de IVA de toda la NC.
      */
     public BigDecimal getTotalIva() {
+        if (detalles == null) return BigDecimal.ZERO;
         return detalles.stream()
                 .map(DetalleNotaCredito::getMontoIva)
-                .filter(val -> val != null)
+                .filter(java.util.Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
-
     /**
      * Calcula el Importe Neto Gravado (Total Final - Total IVA).
      */
     public BigDecimal getImporteNetoGravado() {
+        if (this.total == null) return BigDecimal.ZERO;
         return this.total.subtract(getTotalIva());
     }
 
@@ -123,14 +124,14 @@ public class NotaCredito {
      * Se usa para mostrar el desglose en el pie de página.
      */
     public BigDecimal getIvaPorAlicuota(double valorAlicuota) {
-        // Convertimos el double a BigDecimal para comparar con precisión
+        if (detalles == null) return BigDecimal.ZERO;
         BigDecimal target = BigDecimal.valueOf(valorAlicuota);
         
         return detalles.stream()
                 .filter(d -> d.getAlicuotaIva() != null && 
                              d.getAlicuotaIva().stripTrailingZeros().compareTo(target.stripTrailingZeros()) == 0)
                 .map(DetalleNotaCredito::getMontoIva)
-                .filter(val -> val != null)
+                .filter(java.util.Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

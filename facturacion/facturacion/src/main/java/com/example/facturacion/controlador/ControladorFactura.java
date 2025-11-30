@@ -23,6 +23,7 @@ import com.example.facturacion.modelo.enums.EstadoFactura;
 import com.example.facturacion.servicio.ServicioCliente;
 import com.example.facturacion.servicio.ServicioFacturacion;
 import com.example.facturacion.servicio.ServicioNotaCredito;
+import com.example.facturacion.servicio.ServicioPago;
 
 @Controller
 @RequestMapping("/facturas")
@@ -38,6 +39,9 @@ public class ControladorFactura {
 
     @Autowired
     private ServicioNotaCredito servicioNotaCredito;
+    
+    @Autowired
+    private ServicioPago servicioPago; // Nuevo servicio inyectado
 
     // ==================== LISTADO Y FILTROS ====================
 
@@ -56,34 +60,35 @@ public class ControladorFactura {
                                  @RequestParam(value = "fechaDesde", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
                                  @RequestParam(value = "fechaHasta", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta) {
         
-        // 1. Preparar fechas (Inicio y Fin del día)
+        // 1. Preparar fechas
         LocalDateTime desde = (fechaDesde != null) ? fechaDesde.atStartOfDay() : null;
         LocalDateTime hasta = (fechaHasta != null) ? fechaHasta.atTime(LocalTime.MAX) : null;
 
-        // 2. LLAMADA CORREGIDA: Usamos el servicio de filtrado
+        // 2. Obtener datos filtrados
         Page<Factura> facturasPage = servicioFacturacion.obtenerFacturasFiltradas(busqueda, estado, desde, hasta, page, size);
         
-        // 3. Cargar datos para los COMBOS de la vista
+        // 3. Cargar combos
         model.addAttribute("listaClientes", servicioCliente.obtenerClientesActivos()); 
         model.addAttribute("listaEstados", EstadoFactura.values());
 
-        // 4. Pasar resultados a la vista
+        // 4. Cargar datos
         model.addAttribute("facturasPage", facturasPage);
         model.addAttribute("facturas", facturasPage.getContent());
         
-        // 5. Mantener los filtros seleccionados en la pantalla (para que no se borren al buscar)
+        // 5. Mantener filtros
         model.addAttribute("clienteIdSeleccionado", clienteId);
         model.addAttribute("estadoSeleccionado", estado);
         model.addAttribute("busqueda", busqueda);
-        model.addAttribute("fechaDesdeSeleccionada", fechaDesde); // Si usas filtro fecha
-        model.addAttribute("fechaHastaSeleccionada", fechaHasta); // Si usas filtro fecha
+        model.addAttribute("fechaDesdeSeleccionada", fechaDesde);
+        model.addAttribute("fechaHastaSeleccionada", fechaHasta);
         
         model.addAttribute("active", "facturas");
         
         return "facturas/listar";
     }
 
-    // ... (El resto de métodos: ver, crear, anular, etc. quedan IGUAL que antes)
+    // ==================== DETALLE ====================
+
     @GetMapping("/ver/{id}")
     public String verFactura(@PathVariable("id") Long id, Model model, RedirectAttributes redirectAttrs) {
         try {
@@ -96,6 +101,34 @@ public class ControladorFactura {
             return "redirect:/facturas/listar";
         }
     }
+    
+    // ==================== PAGOS (NUEVO) ====================
+
+    @GetMapping("/ver-pagos/{facturaId}")
+    public String verPagosFactura(@PathVariable("facturaId") Long facturaId, Model model, RedirectAttributes redirectAttrs) {
+        try {
+            Factura factura = servicioFacturacion.obtenerFacturaPorId(facturaId);
+            var pagos = servicioPago.obtenerPagosDeFactura(facturaId);
+            
+            model.addAttribute("factura", factura);
+            model.addAttribute("pagos", pagos);
+            model.addAttribute("active", "facturas");
+            return "pagos/por-factura";
+        } catch (Exception ex) {
+            redirectAttrs.addFlashAttribute("error", "Error al cargar pagos: " + ex.getMessage());
+            return "redirect:/facturas/listar";
+        }
+    }
+
+    // ==================== GENERACIÓN (VISTA) ====================
+
+    @GetMapping("/crear")
+    public String mostrarPanelGeneracion(Model model) {
+        // No se usa mucho porque ahora está integrado en listar, pero lo dejamos por si acaso
+        return "redirect:/facturas/listar";
+    }
+
+    // ==================== PROCESOS (POST) ====================
 
     @PostMapping("/generar-individual")
     public String procesarFacturacionIndividual(@RequestParam("clienteId") Long clienteId, 
@@ -120,16 +153,13 @@ public class ControladorFactura {
             @RequestParam("fechaFin") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin,
             RedirectAttributes redirectAttrs) {
         try {
-            // Ahora los tipos coinciden (LocalDate)
             int cantidad = servicioFacturacion.ejecutarFacturacionMasiva(inicio, fin);
-            
             if (cantidad > 0) {
                 redirectAttrs.addFlashAttribute("exito", "Proceso masivo finalizado. Se generaron " + cantidad + " facturas.");
             } else {
                 redirectAttrs.addFlashAttribute("info", "El proceso finalizó sin generar facturas.");
             }
         } catch (Exception ex) {
-            // logger.error("Error...", ex);
             redirectAttrs.addFlashAttribute("error", "Error: " + ex.getMessage());
         }
         return "redirect:/facturas/listar";
@@ -138,7 +168,8 @@ public class ControladorFactura {
     @PostMapping("/anular/{id}")
     public String anularFactura(@PathVariable("id") Long id, RedirectAttributes redirectAttrs) {
         try {
-            servicioNotaCredito.crearNotaCreditoPorAnulacion(id, "Anulación a solicitud del usuario");
+            // Validamos en el servicio si tiene pagos antes de anular (agregado en ServicioFacturacion)
+            servicioFacturacion.anularFactura(id); // Llama al método que coordina la anulación y creación de NC
             redirectAttrs.addFlashAttribute("exito", "Factura anulada correctamente. Se generó la Nota de Crédito.");
         } catch (IllegalArgumentException ex) {
             redirectAttrs.addFlashAttribute("error", ex.getMessage());

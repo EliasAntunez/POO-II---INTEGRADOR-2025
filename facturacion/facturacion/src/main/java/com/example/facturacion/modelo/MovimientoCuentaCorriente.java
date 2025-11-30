@@ -43,9 +43,9 @@ public class MovimientoCuentaCorriente {
     private NotaCredito notaCredito;
     
     // Si tienes pagos:
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "pago_id")
-    // private Pago pago;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pago_id")
+    private Pago pago;
 
     @Column(nullable = false)
     private LocalDateTime fechaMovimiento = LocalDateTime.now();

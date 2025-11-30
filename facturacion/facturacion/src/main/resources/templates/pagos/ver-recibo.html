@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"> <head>
+    <meta charset="UTF-8">
+    <title th:text="'Recibo X-' + ${pago.id}"></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #555; padding: 20px; }
+        .recibo-container {
+            background: white;
+            width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            font-family: 'Courier New', Courier, monospace; /* Estilo clásico de recibo */
+        }
+        .header { border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .titulo { font-size: 24px; font-weight: bold; }
+        .numero { font-size: 18px; font-weight: bold; }
+        .cuerpo { min-height: 200px; }
+        .renglon { margin-bottom: 10px; font-size: 16px; }
+        .monto-box { 
+            border: 2px solid #000; 
+            padding: 10px 20px; 
+            font-size: 20px; 
+            font-weight: bold; 
+            display: inline-block; 
+            margin-top: 20px; 
+        }
+        .footer { margin-top: 50px; border-top: 2px dashed #000; padding-top: 10px; text-align: center; font-size: 12px; }
+        .firma { margin-top: 60px; border-top: 1px solid #000; width: 200px; margin-left: auto; text-align: center; padding-top: 5px; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .recibo-container { width: 100%; border: none; box-shadow: none; margin: 0; padding: 20px; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="text-center mb-3 no-print">
+        <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimir</button>
+        <button onclick="window.close()" class="btn btn-secondary">Cerrar</button>
+    </div>
+
+    <div class="recibo-container">
+        
+        <div class="header">
+            <div>
+                <div class="titulo">FACTUAPP S.A.</div>
+                <div>Av. Libertador 1234, CABA</div>
+                <div>IVA Responsable Inscripto</div>
+            </div>
+            <div class="text-end">
+                <div style="border:1px solid black; padding:5px 10px; display:inline-block; font-weight:bold; font-size:20px; margin-bottom:5px;">X</div>
+                <div class="numero">RECIBO N° <span th:text="${#numbers.formatInteger(pago.id, 8)}"></span></div>
+                <div>Fecha: <span th:text="${#temporals.format(pago.fechaPago, 'dd/MM/yyyy')}"></span></div>
+            </div>
+        </div>
+
+        <div class="cuerpo">
+            <div class="renglon">
+                <strong>Recibimos de:</strong> <span th:text="${pago.cliente.razonSocial} + ' (CUIT ' + ${pago.cliente.cuit} + ')'"></span>
+            </div>
+            <div class="renglon">
+                <strong>La suma de Pesos:</strong> 
+                <span style="text-transform: uppercase; font-style: italic;">*** <span th:text="${pago.monto}"></span> ***</span>
+            </div>
+            <div class="renglon">
+                <strong>En concepto de:</strong> Pago de Factura N° <span th:text="${pago.factura.id}"></span>
+            </div>
+            <div class="renglon">
+                <strong>Medio de Pago:</strong> <span th:text="${pago.medioPago.descripcion}"></span>
+            </div>
+            <div class="renglon" th:if="${pago.observaciones}">
+                <strong>Observaciones:</strong> <span th:text="${pago.observaciones}"></span>
+            </div>
+
+            <div class="text-end">
+                <div class="monto-box">
+                    Total $ <span th:text="${#numbers.formatDecimal(pago.monto, 1, 2, 'COMMA')}"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Documento no válido como factura - Recibo de cobro interno - Sistema FactuApp
+        </div>
+
+    </div>
+
+</body>
+</html>

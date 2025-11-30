@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+<head>
+    <title>Comprobantes de Pago</title>
+</head>
+<body>
+<th:block th:fragment="content">
+
+    <div class="container mt-4" style="max-width: 900px;">
+        
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center">
+                <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </button>
+                &nbsp;&nbsp;&nbsp;&nbsp;<h2 class="mb-0 fw-bold">Pagos de Factura #<span th:text="${factura.id}"></span></h2>
+            </div>
+            
+            <div>
+                <span th:if="${factura.estado.name() == 'PAGADA'}" class="badge bg-success fs-6 px-3 py-2">
+                    <i class="bi bi-check-circle-fill me-1"></i> PAGADA TOTALMENTE
+                </span>
+                <span th:if="${factura.estado.name() == 'PARCIALMENTE_PAGADA'}" class="badge bg-warning text-dark fs-6 px-3 py-2">
+                    <i class="bi bi-pie-chart-fill me-1"></i> PAGO PARCIAL
+                </span>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="row text-center">
+                    <div class="col-md-4 border-end">
+                        <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Total Factura</small>
+                        <strong class="fs-3 text-dark" th:text="${'$ ' + #numbers.formatDecimal(factura.total, 1, 2, 'COMMA')}"></strong>
+                    </div>
+                    <div class="col-md-4 border-end">
+                        <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Total Pagado</small>
+                        <strong class="fs-3 text-success" th:text="${'$ ' + #numbers.formatDecimal(factura.montoPagado, 1, 2, 'COMMA')}"></strong>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Saldo Pendiente</small>
+                        <strong class="fs-3 text-danger" th:text="${'$ ' + #numbers.formatDecimal(factura.saldoPendiente, 1, 2, 'COMMA')}"></strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-end mb-3">
+            <h5 class="mb-0 text-secondary fw-bold">
+                <i class="bi bi-collection me-2"></i> Comprobantes Emitidos
+            </h5>
+            <span class="text-muted small" th:text="${#lists.size(pagos) + ' pagos registrados'}"></span>
+        </div>
+
+        <div class="list-group shadow-sm border-0">
+            <div th:each="pago : ${pagos}" class="list-group-item p-4 border-0 border-bottom bg-white mb-0">
+                <div class="row align-items-center">
+                    
+                    <div class="col-auto">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center text-primary" style="width: 50px; height: 50px;">
+                            <i class="bi bi-receipt fs-4"></i>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <h5 class="mb-1 fw-bold text-dark">
+                            RECIBO X-<span th:text="${#numbers.formatInteger(pago.id, 8)}"></span>
+                        </h5>
+                        <p class="mb-0 text-muted small">
+                            <i class="bi bi-calendar-event me-1"></i> <span th:text="${#temporals.format(pago.fechaPago, 'dd/MM/yyyy HH:mm')}"></span>
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-credit-card me-1"></i> <span th:text="${pago.medioPago.descripcion}"></span>
+                        </p>
+                        <div th:if="${pago.observaciones != null}" class="mt-2 p-2 bg-light rounded small text-muted fst-italic">
+                            <i class="bi bi-info-circle me-1"></i> <span th:text="${pago.observaciones}"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-auto text-end">
+                        <div class="fs-4 fw-bold text-success mb-2" 
+                             th:text="${'$ ' + #numbers.formatDecimal(pago.monto, 1, 2, 'COMMA')}">
+                        </div>
+                        <a th:href="@{/pagos/ver-comprobante/{id}(id=${pago.id})}" 
+                           class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="bi bi-printer me-1"></i> Imprimir
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div th:if="${#lists.isEmpty(pagos)}" class="list-group-item p-5 text-center text-muted border-0">
+                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                <p class="mb-0">No se han registrado pagos para esta factura.</p>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-end" th:if="${!factura.anulada and factura.saldoPendiente > 0}">
+             <a th:href="@{/pagos/nuevo/{id}(id=${factura.id})}" class="btn btn-success btn-lg shadow-sm">
+                <i class="bi bi-plus-lg me-2"></i> Registrar Nuevo Pago
+            </a>
+        </div>
+
+    </div>
+
+</th:block>
+</body>
+</html>

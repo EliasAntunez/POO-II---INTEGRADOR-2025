@@ -78,11 +78,18 @@ public class ServicioFacturacion {
     }
 
     // ==================== LÓGICA COMÚN DE GENERACIÓN ====================
-private Factura generarFacturaParaCliente(Cliente cliente, List<ClienteServicio> servicios) {
+    private Factura generarFacturaParaCliente(Cliente cliente, List<ClienteServicio> servicios) {
         Factura factura = new Factura();
         factura.setCliente(cliente);
         factura.setFechaEmision(LocalDateTime.now());
-        factura.setEstado(EstadoFactura.EMITIDA);
+        factura.setEstado(EstadoFactura.PENDIENTE_PAGO);
+        
+        // === CORRECCIÓN FUNDAMENTAL ===
+        // Asignamos A o B según la condición del cliente (Responsable Inscripto vs resto)
+        // Asegúrate de importar: com.example.facturacion.modelo.enums.TipoComprobante
+        factura.setTipoComprobante(
+            com.example.facturacion.modelo.enums.TipoComprobante.getTipoFactura(cliente.getCondicionFiscal())
+        );
         
         BigDecimal totalFactura = BigDecimal.ZERO;
 
@@ -94,11 +101,10 @@ private Factura generarFacturaParaCliente(Cliente cliente, List<ClienteServicio>
             detalle.setCantidad(1);
             
             // 1. Setear Precio Base (Neto)
-            // CORRECCIÓN: Como servicio.getPrecio() ya es BigDecimal, lo asignamos directo.
             detalle.setPrecioUnitario(servicio.getPrecio()); 
             
             // 2. Setear Alícuota desde el Servicio
-            // CORRECCIÓN: Usamos getValor() (que devuelve double) y lo convertimos a BigDecimal aquí.
+            // Convertimos el double del Enum a BigDecimal
             detalle.setAlicuotaIva(BigDecimal.valueOf(servicio.getAlicuota().getValor()));
 
             // 3. Calcular Impuestos y Totales
@@ -109,14 +115,17 @@ private Factura generarFacturaParaCliente(Cliente cliente, List<ClienteServicio>
         }
 
         factura.setTotal(totalFactura);
+        
+        // Ahora sí guardará sin error porque tipo_comprobante ya tiene valor
         factura = repositorioFactura.save(factura);
 
         // IMPACTO EN CUENTA CORRIENTE
-        // CORRECCIÓN: Usamos TipoMovimiento.FACTURA que ya tiene un 'DEBE' implícito en tu lógica
         MovimientoCuentaCorriente movimiento = new MovimientoCuentaCorriente();
         movimiento.setTipoMovimiento(TipoMovimiento.FACTURA);
         movimiento.setMonto(totalFactura);
-        movimiento.setDescripcion("Factura N° " + factura.getId());
+        
+        // Usamos el ID generado o el getter de compatibilidad
+        movimiento.setDescripcion("Factura " + factura.getTipoComprobante().getLetra() + " N° " + factura.getId());
         
         servicioCliente.registrarMovimiento(cliente.getId(), movimiento);
 
@@ -129,20 +138,25 @@ private Factura generarFacturaParaCliente(Cliente cliente, List<ClienteServicio>
         Factura factura = repositorioFactura.findById(facturaId)
                 .orElseThrow(() -> new IllegalArgumentException("Factura no encontrada"));
 
+        // Validación 1: Que no esté ya anulada
         if (factura.isAnulada()) {
             throw new IllegalArgumentException("La factura ya está anulada.");
         }
 
+        // === NUEVA VALIDACIÓN (REGLA DE NEGOCIO) ===
+        // Si el monto pagado es mayor a 0, bloqueamos la anulación directa.
+        if (factura.getMontoPagado().compareTo(BigDecimal.ZERO) > 0) {
+            throw new IllegalArgumentException("No se puede anular una factura que tiene pagos registrados. Debe anular los pagos primero o realizar una nota de crédito de ajuste.");
+        }
+
         factura.setAnulada(true);
-        // CORRECCIÓN: Usamos tu estado 'ANULADA'
         factura.setEstado(EstadoFactura.ANULADA);
         repositorioFactura.save(factura);
 
         // IMPACTO EN CUENTA CORRIENTE (REVERSIÓN)
-        // CORRECCIÓN: Usamos TipoMovimiento.ANULACION
         MovimientoCuentaCorriente movimiento = new MovimientoCuentaCorriente();
-        movimiento.setTipoMovimiento(TipoMovimiento.ANULACION); 
-        movimiento.setMonto(factura.getTotal()); // Monto positivo, el método registrarMovimiento debe restar si es ANULACION
+        movimiento.setTipoMovimiento(TipoMovimiento.ANULACION);
+        movimiento.setMonto(factura.getTotal());
         movimiento.setDescripcion("Anulación Factura N° " + factura.getId());
         
         servicioCliente.registrarMovimiento(factura.getCliente().getId(), movimiento);
@@ -154,12 +168,9 @@ private Factura generarFacturaParaCliente(Cliente cliente, List<ClienteServicio>
                                                 LocalDateTime fechaDesde, LocalDateTime fechaHasta,
                                                 int page, int size) {
         
-        // CAMBIO AQUÍ: "fechaEmision" -> "id"
-        // Usamos DESC para que la factura N° 100 aparezca antes que la N° 99
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
         
         if ((busqueda == null || busqueda.isEmpty()) && estado == null && fechaDesde == null && fechaHasta == null) {
-            // También cambiar aquí si usas findAll
             return repositorioFactura.findAll(pageable);
         }
         

@@ -8,7 +8,6 @@
 <th:block th:fragment="content">
 
     <style>
-        /* Estilos personalizados para igualar la imagen */
         .btn-purple {
             background-color: #8a2be2; /* Violeta */
             border-color: #8a2be2;
@@ -69,10 +68,10 @@
         .client-cuit { font-size: 0.85rem; color: #6c757d; }
         .total-amount { font-weight: 700; font-size: 1rem; }
         
-        .badge-emitida { background-color: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
         .badge-anulada { background-color: #dc3545; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
-        .badge-pendiente { background-color: #ffc107; color: black; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
-        .badge-pagada { background-color: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
+        .badge-pendiente { background-color:#0d6efd ; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
+        .badge-pagada { background-color: #4f9474; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
+        .badge-parcial { background-color: #c09208; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
     </style>
 
     <div class="d-flex align-items-center mb-3">
@@ -150,21 +149,23 @@
                         <td class="text-end total-amount">
                             <span th:text="${'$ ' + #numbers.formatDecimal(factura.total, 1, 'POINT', 2, 'COMMA')}"></span>
                         </td>
+
+                        
                         
                         <td class="text-center">
-                            <span th:if="${factura.estado.name() == 'EMITIDA'}" class="badge-emitida">EMITIDA</span>
                             <span th:if="${factura.estado.name() == 'ANULADA'}" class="badge-anulada">ANULADA</span>
-                            <span th:if="${factura.estado.name() == 'PENDIENTE_PAGO'}" class="badge-pendiente">PENDIENTE</span>
+                            <span th:if="${factura.estado.name() == 'PENDIENTE_PAGO'}" class="badge-pendiente">PENDIENTE DE PAGO</span>
                             <span th:if="${factura.estado.name() == 'PAGADA'}" class="badge-pagada">PAGADA</span>
+                            <span th:if="${factura.estado.name() == 'PARCIALMENTE_PAGADA'}" class="badge-parcial">PARCIALMENTE PAGADA</span>
                         </td>
-                        
+
                         <td class="text-end">
                             <a th:href="@{/facturas/ver/{id}(id=${factura.id})}" 
-                               class="btn btn-sm btn-outline-primary" title="Ver Factura">
+                               class="btn btn-sm btn-outline-primary" title="Ver Detalle">
                                 <i class="bi bi-eye"></i>
                             </a>
                             
-                            <span th:if="${factura.estado.name() != 'ANULADA'}">
+                            <span th:if="${!factura.anulada and factura.montoPagado == 0}">
                                 <form th:action="@{/facturas/anular/{id}(id=${factura.id})}" 
                                       method="post" class="d-inline-block ms-1"
                                       onsubmit="return confirm('¿Confirma la anulación de esta factura?');">
@@ -173,13 +174,20 @@
                                     </button>
                                 </form>
                             </span>
+
+                            <a th:if="${factura.montoPagado > 0}" 
+                               th:href="@{/facturas/ver-pagos/{id}(id=${factura.id})}" 
+                               class="btn btn-sm btn-outline-success ms-1" title="Ver Comprobantes de Pago">
+                                <i class="bi bi-receipt"></i>
+                            </a>
                             
-                            <a th:if="${factura.estado.name() == 'ANULADA'}" 
+                            <a th:if="${factura.anulada}" 
                                th:href="@{/facturas/ver-nota-credito/factura/{id}(id=${factura.id})}"
                                class="btn btn-sm btn-outline-warning ms-1" title="Ver Nota de Crédito">
                                 <i class="bi bi-file-earmark-break"></i>
                             </a>
                         </td>
+
                     </tr>
                     <tr th:if="${facturasPage.empty}">
                         <td colspan="6" class="text-center py-5 text-muted">

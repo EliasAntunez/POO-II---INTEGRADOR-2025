@@ -109,9 +109,13 @@
     </style>
 
     <div class="actions-bar d-flex justify-content-between align-items-center">
-        <button onclick="history.back()" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Volver
-        </button>
+        <a th:href="@{/facturas/listar}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Volver al Listado
+        </a>
+
+        <a th:href="@{/facturas/ver/{id}(id=${nc.factura.id})}" class="btn btn-primary btn-sm">
+            <i class="bi bi-receipt"></i> Factura
+        </a>
         
         <button onclick="window.print()" class="btn btn-primary">
             <i class="bi bi-printer"></i> Imprimir
@@ -143,9 +147,19 @@
                 <p class="mb-0"><strong>Anula Comprobante:</strong> Factura N° <span th:text="${#numbers.formatInteger(nc.factura.id, 8)}"></span></p>
                 <p class="mb-0"><strong>CUIT:</strong> 30-11223344-5</p>
                 <p class="mb-0"><strong>Ingresos Brutos:</strong> 901-283812</p>
+                <p class="mb-0"><strong>Inicio Actividades:</strong> 01/01/2020</p>
             </div>
         </div>
 
+        <!-- Período facturado -->
+        <div class="periodo-bar">
+            <span><strong>Período Facturado Desde:</strong> <span style="font-weight:normal" th:text="${#temporals.format(nc.factura.fechaEmision, 'dd/MM/yyyy')}"></span>
+            &nbsp;&nbsp; <strong>Hasta:</strong> <span style="font-weight:normal" th:text="${#temporals.format(nc.factura.fechaEmision.plusMonths(1), 'dd/MM/yyyy')}"></span></span>
+            
+            &nbsp;&nbsp;&nbsp;&nbsp; <strong>Fecha de Vto. para el pago:</strong> <span style="font-weight:normal" th:text="${#temporals.format(nc.factura.fechaVencimiento, 'dd/MM/yyyy')}"></span></span>
+        </div>
+
+        <!-- Datos del cliente -->
         <div class="cliente-section">
             <div class="row">
                 <div class="col-md-8">
@@ -161,6 +175,7 @@
             </div>
         </div>
 
+        <!-- Detalles de la nota de crédito -->
         <div class="table-responsive" style="min-height: 250px;">
             <table class="table table-borderless table-factura">
                 <thead>
@@ -187,6 +202,7 @@
             </table>
         </div>
 
+        <!-- Totales -->
         <div class="row mt-4">
             <div class="col-8">
                 <div class="border p-2">
@@ -207,13 +223,14 @@
                         <td class="text-end" th:text="${'$ ' + #numbers.formatDecimal(nc.totalIva, 1, 'POINT', 2, 'COMMA')}"></td>
                     </tr>
                     <tr class="border-top border-dark border-2">
-                        <td class="text-end fs-5 fw-bold text-danger">TOTAL REINTEGRO:</td>
+                        <td class="text-end fs-6 fw-bold text-danger">TOTAL REINTEGRO:</td>
                         <td class="text-end fs-5 fw-bold text-danger" th:text="${'-$ ' + #numbers.formatDecimal(nc.total, 1, 'POINT', 2, 'COMMA')}"></td>
                     </tr>
                 </table>
             </div>
         </div>
         
+        <!-- pie de página -->
         <div class="row mt-4 pt-2 border-top">
             <div class="col-6">
                 <small class="text-muted">C.A.I.: 12345678901234</small>
