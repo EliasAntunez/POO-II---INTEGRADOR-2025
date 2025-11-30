@@ -1,11 +1,13 @@
 package com.example.facturacion.modelo;
 
+import java.math.BigDecimal;
+
 import com.example.facturacion.modelo.enums.Alicuota;
 import com.example.facturacion.modelo.enums.ConvertidorAlicuota;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -44,7 +46,7 @@ public class Servicio {
     @NotNull(message = "El precio es obligatorio")
     @Positive(message = "El precio debe ser mayor a 0")
     @Column(name = "precio", nullable = false)
-    private Double precio;
+    private BigDecimal precio;
     
     @NotNull(message = "La alícuota es obligatoria")
     @Convert(converter = ConvertidorAlicuota.class)

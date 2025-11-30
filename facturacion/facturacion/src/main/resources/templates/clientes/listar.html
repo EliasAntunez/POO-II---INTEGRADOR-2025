@@ -13,18 +13,100 @@
     <style>
         tbody tr {
             cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        tbody tr:hover {
+            background-color: rgba(140, 55, 220, 0.05) !important;
         }
     
         .fila-seleccionada {
-            border-left: 5px solid rgb(82, 12, 82) !important;
-            background-color: var(--bs-primary-bg-subtle) !important;
+            border-left: 5px solid rgb(140, 55, 220) !important;
+            background-color: rgba(140, 55, 220, 0.1) !important;
+        }
+        
+        .badge-estado {
+            font-size: 0.75rem;
+            padding: 0.35em 0.65em;
+        }
+        
+        .saldo-positivo {
+            color: #198754;
+            font-weight: 600;
+        }
+        
+        .saldo-negativo {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .saldo-cero {
+            color: #6c757d;
         }
     </style>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 mb-0">Lista de Clientes</h1>
+        <h1 class="h2 mb-0">
+            <i class="bi bi-people-fill me-2"></i>
+            Lista de Clientes
+        </h1>
     </div>
 
+    <!-- Mensajes de éxito/error -->
+    <div th:if="${exito}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${exito}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form th:action="@{/clientes/listar}" method="get" class="row g-3 align-items-end">
+                
+                <div class="col-md-4">
+                    <label for="estadoFiltro" class="form-label">
+                        <i class="bi bi-funnel me-1"></i>Filtrar por Estado
+                    </label>
+                    <select id="estadoFiltro" name="estado" class="form-select">
+                        <option value="TODOS" th:selected="${estadoFiltro == null or estadoFiltro == 'TODOS'}">
+                            Todos los estados
+                        </option>
+                        <option th:each="e : ${todosLosEstados}"
+                                th:value="${e.name()}"
+                                th:text="${e.nombre}"
+                                th:selected="${estadoFiltro == e.name()}">
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="busqueda" class="form-label">
+                        <i class="bi bi-search me-1"></i>Buscar
+                    </label>
+                    <input type="text" id="busqueda" name="busqueda" 
+                           class="form-control" 
+                           th:value="${busqueda}"
+                           placeholder="Nombre, DNI, CUIT, Email...">
+                </div>
+                
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i> Buscar
+                    </button>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de clientes -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <form id="accionClienteForm" method="post">
@@ -34,152 +116,279 @@
                     <table class="table table-striped table-hover align-middle mb-0 border-bottom">
                         <thead class="table-light sticky-top">
                             <tr>
-                                <th>ID</th>
+                                <th style="width: 60px;">ID</th>
                                 <th>Nombre Completo</th>
-                                <th>Razón Social</th>
                                 <th>DNI</th>
-                                <th>CUIT</th>
-                                <th>Email</th>
-                                <th>Cond. Fiscal</th>
-                                <th class="text-center">Activo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="cliente : ${clientesPage.content}"
-                                th:id="${'clienteRow-' + cliente.id}"
-                                th:data-cliente-id="${cliente.id}"
-                                onclick="seleccionarClienteDesdeFila(this)">
-                                
-                                <td th:text="${cliente.id}"></td>
-                                <td>
+<th>CUIT</th>
+<th>Email</th>
+<th>Cond. Fiscal</th>
+<th class="text-center">Estado</th>
+<th class="text-end">Saldo C.C.</th>
+<th class="text-center" style="width: 100px;">Acciones</th>
+</tr>
+</thead>
+<tbody>
+<tr th:each="cliente : ${clientesPage.content}"
+                             th:id="${'clienteRow-' + cliente.id}"
+                             th:data-cliente-id="${cliente.id}"
+                             onclick="seleccionarClienteDesdeFila(this)">
+                            <td th:text="${cliente.id}"></td>
+                            
+                            <td>
+                                <div class="fw-bold">
                                     <span th:text="${cliente.nombre}"></span> 
                                     <span th:text="${cliente.apellido}"></span>
-                                </td>
-                                <td th:text="${cliente.razonSocial}"></td>
-                                <td th:text="${cliente.dni}"></td>
-                                <td th:text="${cliente.cuit}"></td>
-                                <td th:text="${cliente.email}"></td>
-                                <td th:text="${cliente.condicionFiscal.descripcion}"></td>
-                                <td class="text-center">
-                                    <i th:classappend="${cliente.activo} ? 'bi bi-check-circle-fill text-success' : 'bi bi-x-circle-fill text-danger'"
-                                       th:title="${cliente.activo ? 'Activo' : 'Inactivo'}"></i>
-                                </td>
-                            </tr>
+                                </div>
+                                <small class="text-muted" th:text="${cliente.razonSocial}"></small>
+                            </td>
                             
-                            <tr th:if="${clientes == null OR clientes.empty}">
-                                <td colspan="8" class="text-center text-muted p-4">
-                                    No se encontraron clientes.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </form>
-        </div>
-        
-        <div class="card-footer bg-white border-top">
-            <div>
-                <nav aria-label="Paginación clientes" class="d-flex justify-content-center mt-2">
-                    <ul class="pagination mb-0">
-                        <li class="page-item" th:classappend="${!clientesPage.hasPrevious()} ? 'disabled'">
-                            <a class="page-link" th:href="@{/clientes/listar(page=${clientesPage.number-1},size=${clientesPage.size})}" aria-label="Anterior">
-                                <span aria-hidden="true">&laquo;</span>
+                            <td>
+                                <span class="font-monospace" th:text="${cliente.dni}"></span>
+                            </td>
+                            
+                            <td>
+                                <span class="font-monospace" th:text="${cliente.cuit}"></span>
+                            </td>
+                            
+                            <td>
+                                <small th:text="${cliente.email}"></small>
+                            </td>
+                            
+                            <td>
+                                <span class="badge bg-secondary" th:text="${cliente.condicionFiscal.descripcion}"></span>
+                            </td>
+                            
+                            <td class="text-center">
+                                <span th:if="${cliente.estado.name() == 'ACTIVO'}" 
+                                      class="badge badge-estado bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    <span th:text="${cliente.estado.nombre}"></span>
+                                </span>
+                                <span th:if="${cliente.estado.name() == 'SUSPENDIDO'}" 
+                                      class="badge badge-estado bg-warning text-dark">
+                                    <i class="bi bi-pause-circle me-1"></i>
+                                    <span th:text="${cliente.estado.nombre}"></span>
+                                </span>
+                                <span th:if="${cliente.estado.name() == 'DADO_DE_BAJA'}" 
+                                      class="badge badge-estado bg-danger">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    <span th:text="${cliente.estado.nombre}"></span>
+                                </span>
+                            </td>
+                            
+                            <td class="text-end">
+                                <span th:if="${cliente.saldoCuentaCorriente > 0}" 
+                                      class="saldo-positivo">
+                                    +$<span th:text="${#numbers.formatDecimal(cliente.saldoCuentaCorriente, 1, 'POINT', 2, 'COMMA')}"></span>
+                                </span>
+                                <span th:if="${cliente.saldoCuentaCorriente < 0}" 
+                                      class="saldo-negativo">
+                                    -$<span th:text="${#numbers.formatDecimal(cliente.saldoCuentaCorriente * -1, 1, 'POINT', 2, 'COMMA')}"></span>
+                                </span>
+                                <span th:if="${cliente.saldoCuentaCorriente == 0}" 
+                                      class="saldo-cero">
+                                    $0.00
+                                </span>
+                            </td>
+                            
+                            <td class="text-center" onclick="event.stopPropagation();">
+                                <a th:href="@{/clientes/cuenta-corriente/{id}(id=${cliente.id})}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   title="Ver cuenta corriente">
+                                    <i class="bi bi-wallet2"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        
+                        <tr th:if="${clientes == null OR clientes.empty}">
+                            <td colspan="9" class="text-center text-muted p-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No se encontraron clientes.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Paginación -->
+    <div class="card-footer bg-white border-top" th:if="${clientesPage.totalPages > 1}">
+        <nav aria-label="Paginación clientes" class="d-flex justify-content-center mt-2">
+            <ul class="pagination mb-0">
+                <li class="page-item" th:classappend="${!clientesPage.hasPrevious()} ? 'disabled'">
+                    <a class="page-link" 
+                       th:href="@{/clientes/listar(page=${clientesPage.number-1},size=${clientesPage.size},estado=${estadoFiltro},busqueda=${busqueda})}" 
+                       aria-label="Anterior">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                
+                <li class="page-item" 
+                    th:each="i : ${#numbers.sequence(0, clientesPage.totalPages - 1)}" 
+                    th:classappend="${i == clientesPage.number} ? 'active'">
+                    <a class="page-link" 
+                       th:href="@{/clientes/listar(page=${i},size=${clientesPage.size},estado=${estadoFiltro},busqueda=${busqueda})}" 
+                       th:text="${i+1}">1</a>
+                </li>
+                
+                <li class="page-item" th:classappend="${!clientesPage.hasNext()} ? 'disabled'">
+                    <a class="page-link" 
+                       th:href="@{/clientes/listar(page=${clientesPage.number+1},size=${clientesPage.size},estado=${estadoFiltro},busqueda=${busqueda})}" 
+                       aria-label="Siguiente">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    
+    <!-- Footer con botones de acción -->
+    <div class="card-footer bg-light py-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            
+            <a th:href="@{/clientes/crear}" class="btn btn-success">
+                <i class="bi bi-person-plus me-2"></i>Crear Nuevo Cliente
+            </a>
+            
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="button" id="btnModificar" class="btn btn-warning" disabled 
+                        onclick="modificarCliente()">
+                    <i class="bi bi-pencil me-1"></i> Modificar
+                </button>
+                
+                <div class="btn-group" role="group">
+                    <button type="button" id="btnEliminar" class="btn btn-danger dropdown-toggle" 
+                            disabled data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-trash me-1"></i> Acciones
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item text-warning" href="#" onclick="suspenderCliente(); return false;">
+                                <i class="bi bi-pause-circle me-2"></i>Suspender
                             </a>
                         </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, clientesPage.totalPages - 1)}" th:classappend="${i == clientesPage.number} ? 'active'">
-                            <a class="page-link" th:href="@{/clientes/listar(page=${i},size=${clientesPage.size})}" th:text="${i+1}">1</a>
+                        <li>
+                            <a class="dropdown-item text-success" href="#" onclick="reactivarCliente(); return false;">
+                                <i class="bi bi-check-circle me-2"></i>Reactivar
+                            </a>
                         </li>
-                        <li class="page-item" th:classappend="${!clientesPage.hasNext()} ? 'disabled'">
-                            <a class="page-link" th:href="@{/clientes/listar(page=${clientesPage.number+1},size=${clientesPage.size})}" aria-label="Siguiente">
-                                <span aria-hidden="true">&raquo;</span>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="#" onclick="eliminarClientePorPath(); return false;">
+                                <i class="bi bi-x-circle me-2"></i>Dar de Baja
                             </a>
                         </li>
                     </ul>
-                </nav>
-            </div>
-        </div>
-        
-        <div class="card-footer bg-light py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                
-                <a th:href="@{/clientes/crear}" class="btn btn-success">
-                    <i class="bi bi-person-plus me-2"></i>Crear Nuevo Cliente
-                </a>
-                
-                <div class="d-flex gap-2">
-                    <button type="button" id="btnModificar" class="btn btn-warning" disabled onclick="modificarCliente()">
-                        <i class="bi bi-pencil me-1"></i> Modificar
-                    </button>
-                    <button type="button" id="btnEliminar" class="btn btn-danger" disabled onclick="eliminarClientePorPath()">
-                        <i class="bi bi-trash me-1"></i> Eliminar
-                    </button>
                 </div>
             </div>
         </div>
-        
     </div>
-
-    <script th:inline="javascript">
-    /*<![CDATA[*/
     
-    let idClienteSeleccionado = null;
-    const btnModificar = document.getElementById('btnModificar');
-    const btnEliminar = document.getElementById('btnEliminar');
-    const inputIdOculto = document.getElementById('clienteSeleccionadoId');
+</div>
 
-    function seleccionarClienteDesdeFila(filaSeleccionada) {
-        const idClicado = filaSeleccionada.dataset.clienteId;
+<script th:inline="javascript">
+/*<![CDATA[*/
 
-        if (idClicado === idClienteSeleccionado) {
-            // Deselección
-            filaSeleccionada.classList.remove('fila-seleccionada');
-            idClienteSeleccionado = null;
-            inputIdOculto.value = '';
-            btnModificar.disabled = true;
-            btnEliminar.disabled = true;
+let idClienteSeleccionado = null;
+const btnModificar = document.getElementById('btnModificar');
+const btnEliminar = document.getElementById('btnEliminar');
+const btnVerCuenta = document.getElementById('btnVerCuenta');
+const inputIdOculto = document.getElementById('clienteSeleccionadoId');
+
+function seleccionarClienteDesdeFila(filaSeleccionada) {
+    const idClicado = filaSeleccionada.dataset.clienteId;
+
+    if (idClicado === idClienteSeleccionado) {
+        // Deselección
+        filaSeleccionada.classList.remove('fila-seleccionada');
+        idClienteSeleccionado = null;
+        inputIdOculto.value = '';
+        btnModificar.disabled = true;
+        btnEliminar.disabled = true;
+        btnVerCuenta.disabled = true;
+        
+    } else {
+        // Selección
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.classList.remove('fila-seleccionada');
+        });
+        filaSeleccionada.classList.add('fila-seleccionada');
+        idClienteSeleccionado = idClicado;
+        inputIdOculto.value = idClicado;
+        btnModificar.disabled = false;
+        btnEliminar.disabled = false;
+        btnVerCuenta.disabled = false;
+    }
+}
+
+function verCuentaCorriente() {
+    if (idClienteSeleccionado) {
+        window.location.href = /*[[@{/clientes/cuenta-corriente}]]*/ '/clientes/cuenta-corriente' + '/' + idClienteSeleccionado;
+    } else {
+        alert('Por favor, seleccione un cliente.');
+    }
+}
+
+function modificarCliente() {
+    if (idClienteSeleccionado) {
+        var url = /*[[@{/clientes/modificar}]]*/ '/clientes/modificar';
+        window.location.href = url + '?id=' + idClienteSeleccionado;
+    } else {
+        alert('Por favor, seleccione un cliente para modificar.');
+    }
+}
+
+function eliminarClientePorPath() {
+    if (idClienteSeleccionado) {
+        if (confirm('¿Está seguro que desea DAR DE BAJA al cliente ID ' + idClienteSeleccionado + '?\n\nEsta acción cambiará el estado a "Dado de Baja".')) {
+            var urlBase = /*[[@{/clientes/eliminar}]]*/ '/clientes/eliminar';
             
-        } else {
-            // Selección
-            document.querySelectorAll('tbody tr').forEach(row => {
-                row.classList.remove('fila-seleccionada');
-            });
-            filaSeleccionada.classList.add('fila-seleccionada');
-            idClienteSeleccionado = idClicado;
-            inputIdOculto.value = idClicado;
-            btnModificar.disabled = false;
-            btnEliminar.disabled = false;
+            var formEliminar = document.createElement('form');
+            formEliminar.method = 'POST';
+            formEliminar.action = urlBase + '/' + idClienteSeleccionado; 
+            document.body.appendChild(formEliminar);
+            formEliminar.submit();
         }
+    } else {
+        alert('Por favor, seleccione un cliente.');
     }
-    
-    function modificarCliente() {
-        if (idClienteSeleccionado) {
-            var url = /*[[@{/clientes/modificar}]]*/ '/clientes/modificar';
-            window.location.href = url + '?id=' + idClienteSeleccionado;
-        } else {
-            alert('Por favor, seleccione un cliente para modificar.');
-        }
-    }
-    
-    function eliminarClientePorPath() {
-        if (idClienteSeleccionado) {
-            if (confirm('¿Está seguro que desea eliminar al cliente ID ' + idClienteSeleccionado + '?')) {
-                var urlBase = /*[[@{/clientes/eliminar}]]*/ '/clientes/eliminar';
-                
-                // Creamos un formulario temporal para hacer el POST
-                var formEliminar = document.createElement('form');
-                formEliminar.method = 'POST';
-                formEliminar.action = urlBase + '/' + idClienteSeleccionado; 
-                document.body.appendChild(formEliminar);
-                formEliminar.submit();
-            }
-        } else {
-            alert('Por favor, seleccione un cliente para eliminar.');
-        }
-    }
-    
-    /*]]>*/
-    </script>
-</th:block>
+}
 
+function suspenderCliente() {
+    if (idClienteSeleccionado) {
+        if (confirm('¿Está seguro que desea SUSPENDER al cliente ID ' + idClienteSeleccionado + '?')) {
+            var urlBase = /*[[@{/clientes/suspender}]]*/ '/clientes/suspender';
+            
+            var formSuspender = document.createElement('form');
+            formSuspender.method = 'POST';
+            formSuspender.action = urlBase + '/' + idClienteSeleccionado; 
+            document.body.appendChild(formSuspender);
+            formSuspender.submit();
+        }
+    } else {
+        alert('Por favor, seleccione un cliente.');
+    }
+}
+
+function reactivarCliente() {
+    if (idClienteSeleccionado) {
+        if (confirm('¿Está seguro que desea REACTIVAR al cliente ID ' + idClienteSeleccionado + '?')) {
+            var urlBase = /*[[@{/clientes/reactivar}]]*/ '/clientes/reactivar';
+            
+            var formReactivar = document.createElement('form');
+            formReactivar.method = 'POST';
+            formReactivar.action = urlBase + '/' + idClienteSeleccionado; 
+            document.body.appendChild(formReactivar);
+            formReactivar.submit();
+        }
+    } else {
+        alert('Por favor, seleccione un cliente.');
+    }
+}
+
+/*]]>*/
+</script>
+</th:block>
 </body>
 </html>
