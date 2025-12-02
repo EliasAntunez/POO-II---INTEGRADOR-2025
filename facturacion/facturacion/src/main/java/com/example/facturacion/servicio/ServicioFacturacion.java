@@ -369,8 +369,13 @@ public class ServicioFacturacion {
         Factura factura = new Factura();
         factura.setCliente(cliente);
         
-        // Convertir LocalDate a LocalDateTime (inicio del día)
-        factura.setFechaEmision(fechaEmision.atStartOfDay());
+        // Si la fecha de emisión es hoy, usamos la hora actual. Si no, usamos el inicio del día.
+        if (fechaEmision.equals(LocalDate.now())) {
+            factura.setFechaEmision(LocalDateTime.now());
+        } else {
+            factura.setFechaEmision(fechaEmision.atStartOfDay());
+        }
+
         factura.setFechaVencimiento(calcularFechaVencimiento(fechaEmision, cliente));
         
         // NUEVO: Guardar período facturado

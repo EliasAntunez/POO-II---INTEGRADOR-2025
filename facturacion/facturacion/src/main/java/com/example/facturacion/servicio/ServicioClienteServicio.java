@@ -44,10 +44,18 @@ public class ServicioClienteServicio {
      * @param size tamaño de página
      */
     public org.springframework.data.domain.Page<ClienteServicio> obtenerClientesServiciosPaginados(int page, int size) {
+        return buscarClientesServicios(true, null, null, page, size);
+    }
+
+    public org.springframework.data.domain.Page<ClienteServicio> buscarClientesServicios(Boolean activo, String cliente, String servicio, int page, int size) {
         final int safePage = Math.max(0, page);
         final int safeSize = Math.max(1, size);
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(safePage, safeSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
-        return repositorioClienteServicio.findByActivoTrue(pageable);
+        
+        String clientePattern = (cliente != null && !cliente.isBlank()) ? "%" + cliente.toLowerCase() + "%" : null;
+        String servicioPattern = (servicio != null && !servicio.isBlank()) ? "%" + servicio.toLowerCase() + "%" : null;
+        
+        return repositorioClienteServicio.buscarClientesServicios(activo, clientePattern, servicioPattern, pageable);
     }
 
     // Guardar un nuevo cliente-servicio: resolver referencias por id y validar duplicados

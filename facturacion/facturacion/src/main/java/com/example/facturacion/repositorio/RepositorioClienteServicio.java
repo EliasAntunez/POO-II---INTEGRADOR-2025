@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.facturacion.modelo.Cliente;
@@ -28,4 +30,12 @@ public interface RepositorioClienteServicio extends JpaRepository<ClienteServici
 
 	java.util.Optional<ClienteServicio> findByClienteIdAndServicioIdAndActivoTrue(Long clienteId, Long servicioId);
 
+    @Query("SELECT cs FROM ClienteServicio cs WHERE " +
+           "(:activo IS NULL OR cs.activo = :activo) AND " +
+           "(:cliente IS NULL OR LOWER(cs.cliente.nombre) LIKE :cliente OR LOWER(cs.cliente.apellido) LIKE :cliente) AND " +
+           "(:servicio IS NULL OR LOWER(cs.servicio.nombre) LIKE :servicio)")
+    Page<ClienteServicio> buscarClientesServicios(@Param("activo") Boolean activo, 
+                                                  @Param("cliente") String cliente, 
+                                                  @Param("servicio") String servicio, 
+                                                  Pageable pageable);
 }

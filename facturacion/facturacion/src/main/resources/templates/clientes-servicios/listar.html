@@ -18,16 +18,64 @@
                 }
             </style>
 
-            <div class="d-flex align-items-center mb-3">
-                <i class="bi bi-link-45deg fs-3 me-2"></i>
-                <h2 class="mb-0 fw-bold">Gestión de Clientes Servicios</h2>
+            <div class="page-header mb-4">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-warning bg-opacity-10 text-warning me-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-link-45deg fs-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0 fw-bold text-gray-800">Asignación de Servicios</h2>
+                        <p class="text-muted mb-0">Gestiona los servicios contratados por cada cliente</p>
+                    </div>
+                </div>
             </div>
 
             <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold text-gray-800">Listado de Asignaciones</h5>
+                    <span class="badge bg-warning text-dark rounded-pill" th:text="${clientesServiciosPage.totalElements + ' Registros'}">0 Registros</span>
+                </div>
+                
+                <!-- Filtros de Búsqueda -->
+                <div class="card-body border-bottom bg-light">
+                    <form method="get" th:action="@{/clientes-servicios/listar}" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="cliente" class="form-label small fw-bold text-muted">Cliente</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" id="cliente" name="cliente" th:value="${cliente}" placeholder="Buscar cliente...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="servicio" class="form-label small fw-bold text-muted">Servicio</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-briefcase"></i></span>
+                                <input type="text" class="form-control" id="servicio" name="servicio" th:value="${servicio}" placeholder="Buscar servicio...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="activo" class="form-label small fw-bold text-muted">Estado</label>
+                            <select class="form-select" id="activo" name="activo">
+                                <option value="" th:selected="${activo == null}">Todos</option>
+                                <option value="true" th:selected="${activo == true}">Activo</option>
+                                <option value="false" th:selected="${activo == false}">Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="bi bi-filter"></i> Filtrar
+                            </button>
+                            <a th:href="@{/clientes-servicios/listar}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg"></i>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="card-body p-0">
                     <form id="accionServicioForm" method="post">
                         <input type="hidden" name="id" id="clienteServicioSeleccionadoId" />
-                        <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
+                        <div class="table-responsive">
                             <table class="table table-striped table-hover align-middle mb-0 border-bottom">
                                 <thead class="table-light sticky-top">
                                     <tr>
@@ -73,15 +121,15 @@
                         <nav aria-label="Paginación clientes-servicios" class="d-flex justify-content-center mt-2">
                             <ul class="pagination mb-0">
                                 <li class="page-item" th:classappend="${!clientesServiciosPage.hasPrevious()} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/clientes-servicios/listar(page=${clientesServiciosPage.number-1},size=${clientesServiciosPage.size})}" aria-label="Anterior">
+                                    <a class="page-link" th:href="@{/clientes-servicios/listar(page=${clientesServiciosPage.number-1},size=${clientesServiciosPage.size},cliente=${cliente},servicio=${servicio},activo=${activo})}" aria-label="Anterior">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
                                 <li class="page-item" th:each="i : ${#numbers.sequence(0, clientesServiciosPage.totalPages - 1)}" th:classappend="${i == clientesServiciosPage.number} ? 'active'">
-                                    <a class="page-link" th:href="@{/clientes-servicios/listar(page=${i},size=${clientesServiciosPage.size})}" th:text="${i+1}">1</a>
+                                    <a class="page-link" th:href="@{/clientes-servicios/listar(page=${i},size=${clientesServiciosPage.size},cliente=${cliente},servicio=${servicio},activo=${activo})}" th:text="${i+1}">1</a>
                                 </li>
                                 <li class="page-item" th:classappend="${!clientesServiciosPage.hasNext()} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/clientes-servicios/listar(page=${clientesServiciosPage.number+1},size=${clientesServiciosPage.size})}" aria-label="Siguiente">
+                                    <a class="page-link" th:href="@{/clientes-servicios/listar(page=${clientesServiciosPage.number+1},size=${clientesServiciosPage.size},cliente=${cliente},servicio=${servicio},activo=${activo})}" aria-label="Siguiente">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>

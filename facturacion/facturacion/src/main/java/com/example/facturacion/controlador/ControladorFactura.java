@@ -78,6 +78,20 @@ public class ControladorFactura {
         return "redirect:/facturas/listar";
     }
 
+    @GetMapping("/nueva-individual")
+    public String nuevaIndividual(Model model) {
+        model.addAttribute("listaClientes", servicioCliente.obtenerClientesActivos());
+        model.addAttribute("active", "facturas");
+        return "facturas/crear-individual";
+    }
+
+    @GetMapping("/nueva-masiva")
+    public String nuevaMasiva(Model model) {
+        model.addAttribute("listaServicios", servicioServicio.obtenerTodosLosServicios());
+        model.addAttribute("active", "facturas");
+        return "facturas/crear-masiva";
+    }
+
     @GetMapping("/listar")
     public String listarFacturas(Model model,
                                  @RequestParam(value = "page", defaultValue = "0") int page,

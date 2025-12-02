@@ -6,10 +6,13 @@
 </head>
 <body>
 <th:block th:fragment="content">
+    <style>
+        .bg-gradient-success { background: linear-gradient(45deg, #198754, #146c43); color: white; }
+    </style>
 
     <div class="container mt-4" style="max-width: 700px;">
         <div class="card shadow-sm">
-            <div class="card-header bg-success text-white">
+            <div class="card-header bg-gradient-success text-white">
                 <h4 class="mb-0"><i class="bi bi-cash-coin me-2"></i> Registrar Pago</h4>
             </div>
             <div class="card-body p-4">

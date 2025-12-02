@@ -2,18 +2,16 @@ package com.example.facturacion.controlador;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.example.facturacion.servicio.ServicioCliente;
-import com.example.facturacion.servicio.ServicioServicio;
-import org.springframework.web.bind.annotation.ModelAttribute;
-
-import com.example.facturacion.servicio.ServicioClienteServicio;
 import com.example.facturacion.modelo.ClienteServicio;
-
-import org.springframework.ui.Model;
+import com.example.facturacion.servicio.ServicioCliente;
+import com.example.facturacion.servicio.ServicioClienteServicio;
+import com.example.facturacion.servicio.ServicioServicio;
 
 
 @Controller
@@ -29,11 +27,26 @@ public class ControladorClienteServicio {
 
     @GetMapping({"/", "/listar"})
     public String listarClientesServicios(Model model,
+                                          @org.springframework.web.bind.annotation.RequestParam(value = "activo", required = false) Boolean activo,
+                                          @org.springframework.web.bind.annotation.RequestParam(value = "cliente", required = false) String cliente,
+                                          @org.springframework.web.bind.annotation.RequestParam(value = "servicio", required = false) String servicio,
                                           @org.springframework.web.bind.annotation.RequestParam(value = "page", defaultValue = "0") int page,
                                           @org.springframework.web.bind.annotation.RequestParam(value = "size", defaultValue = "10") int size) {
-        var clientesServiciosPage = servicioClienteServicio.obtenerClientesServiciosPaginados(page, size);
+        // Default to active only if no filter is provided? 
+        // The previous implementation was findByActivoTrue.
+        // If the user wants to see all, they can select "Todos" in the filter (which sends null).
+        // But if I send null to the repo, it returns all.
+        // If I want to maintain the default behavior of showing only active ones when first loading the page:
+        if (activo == null && cliente == null && servicio == null) {
+             activo = true;
+        }
+        
+        var clientesServiciosPage = servicioClienteServicio.buscarClientesServicios(activo, cliente, servicio, page, size);
         model.addAttribute("clientesServiciosPage", clientesServiciosPage);
         model.addAttribute("clientesServicios", clientesServiciosPage.getContent());
+        model.addAttribute("activo", activo);
+        model.addAttribute("cliente", cliente);
+        model.addAttribute("servicio", servicio);
         return "clientes-servicios/listar";
     }
 

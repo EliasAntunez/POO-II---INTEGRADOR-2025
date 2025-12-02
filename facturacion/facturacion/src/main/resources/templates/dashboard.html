@@ -10,44 +10,167 @@
 
 <th:block th:fragment="content">
 
-    <header class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">Panel de control</h1>
-    </header>
+    <style>
+        .dashboard-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+        .bg-gradient-primary { background: linear-gradient(45deg, #0d6efd, #0a58ca); color: white; }
+        .bg-gradient-success { background: linear-gradient(45deg, #198754, #146c43); color: white; }
+        .bg-gradient-info { background: linear-gradient(45deg, #0dcaf0, #0aa2c0); color: white; }
+        .bg-gradient-warning { background: linear-gradient(45deg, #ffc107, #ffca2c); color: black; }
+        .bg-gradient-purple { background: linear-gradient(45deg, #6f42c1, #59359a); color: white; }
+        
+        .card-title { font-weight: 700; }
+        .welcome-banner {
+            background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner shadow-sm">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h1 class="h2 fw-bold mb-2">¡Hola, Administrador!</h1>
+                <p class="mb-0 opacity-75">Bienvenido al panel de control del Sistema de Facturación.</p>
+            </div>
+            <i class="bi bi-speedometer2" style="font-size: 3rem; opacity: 0.5;"></i>
+        </div>
+    </div>
+
+    <h4 class="mb-3 fw-bold text-secondary"><i class="bi bi-lightning-charge-fill me-2"></i>Acciones Rápidas</h4>
+    
+    <div class="row g-4 mb-5">
+        <!-- Nuevo Cliente -->
+        <div class="col-md-4">
+            <a th:href="@{/clientes/crear}" class="text-decoration-none">
+                <div class="card dashboard-card shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-circle bg-primary text-white mx-auto">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <h5 class="card-title text-dark">Nuevo Cliente</h5>
+                        <p class="card-text text-muted small">Registrar un nuevo cliente en el sistema.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Nuevo Servicio -->
+        <div class="col-md-4">
+            <a th:href="@{/servicios/crear}" class="text-decoration-none">
+                <div class="card dashboard-card shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-circle bg-success text-white mx-auto">
+                            <i class="bi bi-briefcase-fill"></i>
+                        </div>
+                        <h5 class="card-title text-dark">Nuevo Servicio</h5>
+                        <p class="card-text text-muted small">Crear un nuevo servicio facturable.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Asignar Servicio -->
+        <div class="col-md-4">
+            <a th:href="@{/clientes-servicios/crear}" class="text-decoration-none">
+                <div class="card dashboard-card shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-circle bg-info text-white mx-auto">
+                            <i class="bi bi-link-45deg"></i>
+                        </div>
+                        <h5 class="card-title text-dark">Asignar Servicio</h5>
+                        <p class="card-text text-muted small">Vincular un servicio existente a un cliente.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <h4 class="mb-3 fw-bold text-secondary"><i class="bi bi-grid-fill me-2"></i>Módulos de Gestión</h4>
 
     <div class="row g-4">
-        <div class="col-12 col-lg-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header">
-                    <strong>Acciones rápidas</strong>
+        <!-- Gestión Clientes -->
+        <div class="col-md-6 col-lg-3">
+            <a th:href="@{/clientes/listar}" class="text-decoration-none">
+                <div class="card dashboard-card shadow-sm h-100 border-start border-4 border-primary">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-people fs-4 text-primary me-2"></i>
+                            <h6 class="card-title mb-0 text-dark">Clientes</h6>
+                        </div>
+                        <p class="card-text text-muted small">Administrar base de datos de clientes.</p>
+                    </div>
                 </div>
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        <a th:href="@{/clientes/crear}" class="list-group-item list-group-item-action text-dark text-decoration-none">
-                            <i class="bi bi-person-plus me-2 text-primary"></i>
-                            Nuevo cliente
-                        </a>
-                    </ul>
-                </div>
-
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        <a th:href="@{/servicios/crear}" class="list-group-item list-group-item-action text-dark text-decoration-none">
-                            <i class="bi bi-briefcase me-2 text-primary"></i>
-                            Nuevo servicio
-                        </a>
-                    </ul>
-                </div>
-
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        <a th:href="@{/clientes-servicios/crear}" class="list-group-item list-group-item-action text-dark text-decoration-none">
-                            <i class="bi bi-link-45deg me-2 text-primary"></i>
-                            Asignar servicio a cliente
-                        </a>
-                    </ul>
-                </div>
-            </div>
+            </a>
         </div>
+
+        <!-- Gestión Servicios -->
+        <div class="col-md-6 col-lg-3">
+            <a th:href="@{/servicios/listar}" class="text-decoration-none">
+                <div class="card dashboard-card shadow-sm h-100 border-start border-4 border-success">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-box-seam fs-4 text-success me-2"></i>
+                            <h6 class="card-title mb-0 text-dark">Servicios</h6>
+                        </div>
+                        <p class="card-text text-muted small">Catálogo de servicios ofrecidos.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Gestión Facturas -->
+        <div class="col-md-6 col-lg-3">
+            <a th:href="@{/facturas/listar}" class="text-decoration-none">
+                <div class="card dashboard-card shadow-sm h-100 border-start border-4 border-warning">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-receipt fs-4 text-warning me-2"></i>
+                            <h6 class="card-title mb-0 text-dark">Facturas</h6>
+                        </div>
+                        <p class="card-text text-muted small">Emisión y consulta de comprobantes.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Gestión Asignaciones -->
+        <div class="col-md-6 col-lg-3">
+            <a th:href="@{/clientes-servicios/listar}" class="text-decoration-none">
+                <div class="card dashboard-card shadow-sm h-100 border-start border-4 border-info">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-list-check fs-4 text-info me-2"></i>
+                            <h6 class="card-title mb-0 text-dark">Suscripciones</h6>
+                        </div>
+                        <p class="card-text text-muted small">Ver servicios contratados por cliente.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
 </th:block>
 
 </body>

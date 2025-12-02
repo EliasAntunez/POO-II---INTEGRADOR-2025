@@ -67,10 +67,25 @@ public class ServicioServicio {
      * @return página de servicios
      */
     public Page<Servicio> obtenerServiciosPaginados(int page, int size) {
+        return buscarServicios(null, null, page, size);
+    }
+
+    /**
+     * Busca servicios con filtros.
+     * @param activo Filtro por estado activo (null para todos).
+     * @param nombre Filtro por nombre (null para todos).
+     * @param page número de página (base 0)
+     * @param size tamaño de página
+     * @return página de servicios filtrada
+     */
+    public Page<Servicio> buscarServicios(Boolean activo, String nombre, int page, int size) {
         final int safePage = Math.max(0, page);
         final int safeSize = Math.max(1, size);
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "id"));
-        return repositorioServicio.findAll(pageable);  // Cambiado de findByActivoTrue a findAll
+        
+        String nombrePattern = (nombre != null && !nombre.isBlank()) ? "%" + nombre.toLowerCase() + "%" : null;
+        
+        return repositorioServicio.buscarServicios(activo, nombrePattern, pageable);
     }
 
     /**

@@ -45,11 +45,15 @@ public class ControladorServicio {
      */
     @GetMapping("/listar")
     public String mostrarListaServicios(Model model,
+                                        @RequestParam(value = "activo", required = false) Boolean activo,
+                                        @RequestParam(value = "nombre", required = false) String nombre,
                                         @RequestParam(value = "page", defaultValue = "0") int page,
                                         @RequestParam(value = "size", defaultValue = "10") int size) {
-        var serviciosPage = servicioServicio.obtenerServiciosPaginados(page, size);
+        var serviciosPage = servicioServicio.buscarServicios(activo, nombre, page, size);
         model.addAttribute("serviciosPage", serviciosPage);
         model.addAttribute("servicios", serviciosPage.getContent());
+        model.addAttribute("activo", activo);
+        model.addAttribute("nombre", nombre);
         return "servicios/listar";
     }
 

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/base :: layout(title=~{::title}, content=~{::content})}">
+<head>
+    <title>Facturación Individual</title>
+</head>
+<body>
+<th:block th:fragment="content">
+
+    <div class="container mt-4" style="max-width: 900px;">
+        <div class="row align-items-center mb-4">
+            <div class="col-3">
+                <a th:href="@{/facturas/listar}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Volver
+                </a>
+            </div>
+            
+            <div class="col-6 text-center">
+                <div class="icon-box bg-primary bg-opacity-10 text-primary mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                    <i class="bi bi-person-badge fs-4"></i>
+                </div>
+                <h2 class="mb-0 fw-bold text-gray-800">Facturación Individual</h2>
+                <p class="text-muted mb-0">Generar factura para un cliente específico</p>
+            </div>
+            
+            <div class="col-3"></div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                    
+                    <p class="text-muted small mb-4">
+                        Utilice esta opción para generar la factura mensual de un cliente específico fuera del ciclo automático. 
+                        El sistema buscará los <strong>servicios activos</strong> contratados.
+                    </p>
+                    
+                    <hr class="text-muted opacity-25">
+
+                    <form th:action="@{/facturas/generar-individual}" method="post" onsubmit="return validarFormularioIndividual()">
+                        <label class="form-label fw-bold small">Seleccionar Cliente</label>
+                        <select name="clienteId" id="clienteId" class="form-select mb-3" required onchange="cargarServiciosCliente()">
+                            <option value="" disabled selected>-- Buscar cliente --</option>
+                            <option th:each="c : ${listaClientes}" 
+                                    th:value="${c.id}" 
+                                    th:text="${c.razonSocial + ' - ' + c.cuit}">
+                            </option>
+                        </select>
+
+                        <!-- Selección de Servicios -->
+                        <div id="serviciosContainer" class="mb-3" style="display: none;">
+                            <label class="form-label fw-bold small">Servicios a Facturar</label>
+                            <div class="card p-2 bg-light">
+                                <div class="form-check mb-2 border-bottom pb-2">
+                                    <input class="form-check-input" type="checkbox" id="selectAllServicios" checked onchange="toggleAllServicios()">
+                                    <label class="form-check-label fw-bold small" for="selectAllServicios">Seleccionar Todos</label>
+                                </div>
+                                <div id="listaServicios" style="max-height: 150px; overflow-y: auto;">
+                                    <!-- Checkboxes inyectados por JS -->
+                                    <div class="text-center text-muted"><small>Cargando servicios...</small></div>
+                                </div>
+                                <div id="mensajeSinServicios" class="text-danger small mt-2" style="display:none;">
+                                    <i class="bi bi-exclamation-circle"></i> El cliente no tiene servicios activos.
+                                </div>
+                            </div>
+                            <div class="form-text" style="font-size: 0.7rem;">Si no selecciona ninguno, no se generará factura.</div>
+                        </div>
+                        
+                        <!-- Tipo de Facturación -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Tipo de Facturación</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipoFacturacion" 
+                                       id="tipoMensualInd" value="mensual" checked 
+                                       onchange="toggleRangoFechasIndividual()">
+                                <label class="form-check-label small" for="tipoMensualInd">
+                                    <strong>Por Mes</strong> (Seleccionar mes completo)
+                                </label>
+                                
+                                <!-- Selector de Mes (visible solo si es mensual) -->
+                                <div id="selectorMesContainer" class="mt-2 ms-3" style="max-width: 200px;">
+                                    <label for="mesFacturacion" class="form-label small text-muted" style="font-size: 0.75rem;">Mes a facturar:</label>
+                                    <input type="month" id="mesFacturacion" name="mesFacturacion" class="form-control form-control-sm">
+                                    <div class="form-text" style="font-size: 0.7rem;">Si se deja vacío, se usará el mes anterior.</div>
+                                </div>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="radio" name="tipoFacturacion" 
+                                       id="tipoRangoInd" value="rango" 
+                                       onchange="toggleRangoFechasIndividual()">
+                                <label class="form-check-label small" for="tipoRangoInd">
+                                    <strong>Rango personalizado</strong> (especificar fechas exactas)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Campos de Rango (inicialmente ocultos) -->
+                        <div id="rangoFechasIndividual" style="display: none;" class="mb-3">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="fechaInicioInd" class="form-label fw-bold small">
+                                        <i class="bi bi-calendar-range me-1"></i> Desde
+                                    </label>
+                                    <input type="date" name="fechaInicio" id="fechaInicioInd" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6">
+                                    <label for="fechaFinInd" class="form-label fw-bold small">
+                                        <i class="bi bi-calendar-range me-1"></i> Hasta
+                                    </label>
+                                    <input type="date" name="fechaFin" id="fechaFinInd" class="form-control form-control-sm">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-blue-action">
+                                <i class="bi bi-file-earmark-plus me-2"></i> Generar Factura Individual
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+    </div>
+
+    <script>
+        // Toggle para facturación individual
+        function toggleRangoFechasIndividual() {
+            const tipoRango = document.getElementById('tipoRangoInd').checked;
+            const rangoDiv = document.getElementById('rangoFechasIndividual');
+            const mesContainer = document.getElementById('selectorMesContainer');
+            
+            if (tipoRango) {
+                rangoDiv.style.display = 'block';
+                if(mesContainer) mesContainer.style.display = 'none';
+                
+                // Hacer obligatorios los campos de rango
+                document.getElementById('fechaInicioInd').required = true;
+                document.getElementById('fechaFinInd').required = true;
+                
+                // Establecer fecha actual en los campos
+                const hoy = new Date();
+                const year = hoy.getFullYear();
+                const month = String(hoy.getMonth() + 1).padStart(2, '0');
+                const day = String(hoy.getDate()).padStart(2, '0');
+                const fechaActual = `${year}-${month}-${day}`;
+                
+                // document.getElementById('fechaEmisionInd').value = fechaActual; // No existe este campo en el form
+                
+                // Establecer primer día del mes anterior como inicio
+                const mesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+                const yearAnt = mesAnterior.getFullYear();
+                const monthAnt = String(mesAnterior.getMonth() + 1).padStart(2, '0');
+                document.getElementById('fechaInicioInd').value = `${yearAnt}-${monthAnt}-01`;
+                
+                // Establecer último día del mes anterior como fin
+                const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+                const dayUlt = String(ultimoDia.getDate()).padStart(2, '0');
+                document.getElementById('fechaFinInd').value = `${yearAnt}-${monthAnt}-${dayUlt}`;
+            } else {
+                rangoDiv.style.display = 'none';
+                if(mesContainer) mesContainer.style.display = 'block';
+                
+                document.getElementById('fechaInicioInd').required = false;
+                document.getElementById('fechaFinInd').required = false;
+                
+                // Pre-seleccionar mes anterior si está vacío
+                const mesInput = document.getElementById('mesFacturacion');
+                if (mesInput && !mesInput.value) {
+                    const hoy = new Date();
+                    const mesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+                    const yearAnt = mesAnterior.getFullYear();
+                    const monthAnt = String(mesAnterior.getMonth() + 1).padStart(2, '0');
+                    mesInput.value = `${yearAnt}-${monthAnt}`;
+                }
+            }
+        }
+
+        // Inicializar al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleRangoFechasIndividual();
+        });
+
+        // ==================== LÓGICA DE SERVICIOS POR CLIENTE ====================
+        function cargarServiciosCliente() {
+            const clienteId = document.getElementById('clienteId').value;
+            const container = document.getElementById('serviciosContainer');
+            const lista = document.getElementById('listaServicios');
+            const mensaje = document.getElementById('mensajeSinServicios');
+            
+            if (!clienteId) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            lista.innerHTML = '<div class="text-center text-muted"><small>Cargando servicios...</small></div>';
+            mensaje.style.display = 'none';
+            
+            fetch(`/facturas/api/servicios-cliente/${clienteId}`)
+                .then(response => response.json())
+                .then(data => {
+                    lista.innerHTML = '';
+                    if (data.length === 0) {
+                        mensaje.style.display = 'block';
+                        document.getElementById('selectAllServicios').disabled = true;
+                    } else {
+                        mensaje.style.display = 'none';
+                        document.getElementById('selectAllServicios').disabled = false;
+                        document.getElementById('selectAllServicios').checked = true;
+                        
+                        data.forEach(servicio => {
+                            const div = document.createElement('div');
+                            div.className = 'form-check';
+                            div.innerHTML = `
+                                <input class="form-check-input servicio-checkbox" type="checkbox" 
+                                       name="serviciosIds" value="${servicio.id}" id="serv_${servicio.id}" checked>
+                                <label class="form-check-label small" for="serv_${servicio.id}">
+                                    ${servicio.nombre} - $${servicio.precio}
+                                </label>
+                            `;
+                            lista.appendChild(div);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    lista.innerHTML = '<div class="text-danger small">Error al cargar servicios</div>';
+                });
+        }
+
+        function toggleAllServicios() {
+            const isChecked = document.getElementById('selectAllServicios').checked;
+            const checkboxes = document.querySelectorAll('.servicio-checkbox');
+            checkboxes.forEach(cb => cb.checked = isChecked);
+        }
+
+        function validarFormularioIndividual() {
+            const checkboxes = document.querySelectorAll('input[name="serviciosIds"]:checked');
+            if (checkboxes.length === 0) {
+                alert('Debe seleccionar al menos un servicio para facturar.');
+                return false;
+            }
+            return true;
+        }
+    </script>
+
+</th:block>
+</body>
+</html>
