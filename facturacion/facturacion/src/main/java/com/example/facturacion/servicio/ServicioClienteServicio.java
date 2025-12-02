@@ -27,6 +27,12 @@ public class ServicioClienteServicio {
         return repositorioClienteServicio.findById(id).orElse(null);
     }
 
+    public List<ClienteServicio> obtenerServiciosPorCliente(Long clienteId) {
+        return repositorioClienteServicio.findByActivoTrue().stream()
+                .filter(cs -> cs.getCliente().getId().equals(clienteId))
+                .toList();
+    }
+
     // Obtener todos los clientes-servicios activos
     public List<ClienteServicio> obtenerTodosLosClientesServiciosActivos() {
         return repositorioClienteServicio.findByActivoTrue();

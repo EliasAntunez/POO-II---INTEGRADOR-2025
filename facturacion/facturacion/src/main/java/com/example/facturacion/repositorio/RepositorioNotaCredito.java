@@ -13,4 +13,7 @@ public interface RepositorioNotaCredito extends JpaRepository<NotaCredito, Long>
     
     // Buscar la NC asociada a una factura (para el botón "Ver Nota de Crédito")
     Optional<NotaCredito> findByFactura(Factura factura);
+
+    // Buscar por ID de factura directamente (más robusto)
+    Optional<NotaCredito> findByFacturaId(Long facturaId);
 }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.facturacion.modelo.enums.CondicionFiscal;
+import com.example.facturacion.modelo.enums.CondicionPago;
 import com.example.facturacion.modelo.enums.EstadoCliente;
 
 import jakarta.persistence.CascadeType;
@@ -92,6 +93,15 @@ public class Cliente {
     @Enumerated(EnumType.STRING)
     @Column(name = "condicion_fiscal", nullable = false, length = 30)
     private CondicionFiscal condicionFiscal;
+
+    /**
+     * Condición de pago del cliente (CONTADO, CUENTA_CORRIENTE_30, etc.).
+     * Define los días de plazo para el vencimiento de facturas.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "condicion_pago", length = 30)
+    @Builder.Default
+    private CondicionPago condicionPago = CondicionPago.CUENTA_CORRIENTE_30;
 
     /**
      * Estado del cliente (ACTIVO, SUSPENDIDO, DADO_DE_BAJA).

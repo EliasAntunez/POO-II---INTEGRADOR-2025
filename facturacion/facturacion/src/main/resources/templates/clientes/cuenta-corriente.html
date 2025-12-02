@@ -201,8 +201,20 @@
                             
                             <td>
                                 <span th:text="${mov.descripcion}"></span>
-                                <a th:if="${mov.factura != null}" th:href="@{/facturas/ver/{id}(id=${mov.factura.id})}" class="ms-1 text-decoration-none"><i class="bi bi-link-45deg"></i></a>
-                                <a th:if="${mov.notaCredito != null}" th:href="@{/facturas/ver-nota-credito/factura/{id}(id=${mov.notaCredito.factura.id})}" class="ms-1 text-decoration-none text-warning"><i class="bi bi-link-45deg"></i></a>
+                                
+                                <!-- Link a Factura -->
+                                <a th:if="${mov.factura != null}" 
+                                   th:href="@{/facturas/ver/{id}(id=${mov.factura.id})}" 
+                                   class="ms-2 text-decoration-none small fw-bold text-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> Ver Factura
+                                </a>
+                                
+                                <!-- Link a Nota de Crédito -->
+                                <a th:if="${mov.notaCredito != null}" 
+                                   th:href="@{/facturas/ver-nota-credito/factura/{id}(id=${mov.notaCredito.factura.id})}" 
+                                   class="ms-2 text-decoration-none small fw-bold text-warning">
+                                    <i class="bi bi-box-arrow-up-right"></i> Ver NC
+                                </a>
                             </td>
                             
                             <td class="text-end text-muted" th:text="${'$' + #numbers.formatDecimal(mov.monto, 1, 'POINT', 2, 'COMMA')}"></td>

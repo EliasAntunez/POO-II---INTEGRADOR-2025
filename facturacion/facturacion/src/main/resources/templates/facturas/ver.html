@@ -205,8 +205,15 @@
 
         <!-- Período facturado -->
         <div class="periodo-bar">
-            <span><strong>Período Facturado Desde:</strong> <span style="font-weight:normal" th:text="${#temporals.format(factura.fechaEmision, 'dd/MM/yyyy')}"></span>
-            &nbsp;&nbsp; <strong>Hasta:</strong> <span style="font-weight:normal" th:text="${#temporals.format(factura.fechaEmision.plusMonths(1), 'dd/MM/yyyy')}"></span></span>
+            <span><strong>Período Facturado Desde:</strong> 
+                <span style="font-weight:normal" 
+                      th:text="${factura.fechaInicioPeriodo != null ? #temporals.format(factura.fechaInicioPeriodo, 'dd/MM/yyyy') : #temporals.format(factura.fechaEmision, 'dd/MM/yyyy')}">
+                </span>
+            &nbsp;&nbsp; <strong>Hasta:</strong> 
+                <span style="font-weight:normal" 
+                      th:text="${factura.fechaFinPeriodo != null ? #temporals.format(factura.fechaFinPeriodo, 'dd/MM/yyyy') : #temporals.format(factura.fechaEmision.plusMonths(1), 'dd/MM/yyyy')}">
+                </span>
+            </span>
             
             &nbsp;&nbsp;&nbsp;&nbsp; <strong>Fecha de Vto. para el pago:</strong> <span style="font-weight:normal" th:text="${#temporals.format(factura.fechaVencimiento, 'dd/MM/yyyy')}"></span></span>
         </div>

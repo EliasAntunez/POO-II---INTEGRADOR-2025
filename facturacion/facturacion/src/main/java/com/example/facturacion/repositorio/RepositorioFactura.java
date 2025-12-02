@@ -1,5 +1,6 @@
 package com.example.facturacion.repositorio;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -40,4 +41,19 @@ public interface RepositorioFactura extends JpaRepository<Factura, Long> {
     List<Factura> findByCliente(Cliente cliente);
     Page<Factura> findByCliente(Cliente cliente, Pageable pageable);
     Page<Factura> findAllByOrderByFechaEmisionDesc(Pageable pageable);
+    
+    /**
+     * Verifica si existe una factura para un cliente en un período de fechas.
+     * Usado para evitar doble facturación del mismo período.
+     */
+    @Query("SELECT CASE WHEN COUNT(f) > 0 THEN true ELSE false END FROM Factura f " +
+           "WHERE f.cliente = :cliente " +
+           "AND FUNCTION('DATE', f.fechaEmision) >= :inicio " +
+           "AND FUNCTION('DATE', f.fechaEmision) <= :fin " +
+           "AND f.anulada = false")
+    boolean existsByClienteAndFechaEmisionBetween(
+            @Param("cliente") Cliente cliente,
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin
+    );
 }

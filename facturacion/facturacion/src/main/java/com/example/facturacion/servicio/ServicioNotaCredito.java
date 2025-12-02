@@ -83,13 +83,8 @@ public class ServicioNotaCredito {
 
     @Transactional(readOnly = true)
     public NotaCredito obtenerPorFactura(Long facturaId) {
-        
-        // CORRECCIÓN: Usar getReferenceById para obtener un proxy de la Factura.
-        // Esto le da a Hibernate el objeto gestionado que necesita para buscar la FK.
-        Factura facturaReferencia = repositorioFactura.getReferenceById(facturaId); 
-        
-        // 2. Buscamos la NC usando esa referencia
-        NotaCredito nc = repositorioNotaCredito.findByFactura(facturaReferencia) 
+        // Buscamos la NC directamente por el ID de la factura para evitar problemas con proxies
+        NotaCredito nc = repositorioNotaCredito.findByFacturaId(facturaId) 
                 .orElseThrow(() -> new IllegalArgumentException("No existe Nota de Crédito para la factura " + facturaId));
         
         // Truco para inicializar la lista Lazy dentro de la transacción (Para que la vista no falle)

@@ -3,6 +3,10 @@ package com.example.facturacion.controlador;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +20,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.facturacion.modelo.Factura;
 import com.example.facturacion.modelo.enums.EstadoFactura;
+import com.example.facturacion.servicio.ResultadoFacturacionMasiva;
 import com.example.facturacion.servicio.ServicioCliente;
+import com.example.facturacion.servicio.ServicioClienteServicio;
 import com.example.facturacion.servicio.ServicioFacturacion;
 import com.example.facturacion.servicio.ServicioNotaCredito;
 import com.example.facturacion.servicio.ServicioPago;
@@ -41,7 +48,28 @@ public class ControladorFactura {
     private ServicioNotaCredito servicioNotaCredito;
     
     @Autowired
-    private ServicioPago servicioPago; // Nuevo servicio inyectado
+    private ServicioPago servicioPago;
+
+    @Autowired
+    private ServicioClienteServicio servicioClienteServicio;
+
+    @Autowired
+    private com.example.facturacion.servicio.ServicioServicio servicioServicio;
+
+    // ==================== API AJAX ====================
+    @GetMapping("/api/servicios-cliente/{clienteId}")
+    @ResponseBody
+    public List<Map<String, Object>> obtenerServiciosCliente(@PathVariable Long clienteId) {
+        return servicioClienteServicio.obtenerServiciosPorCliente(clienteId).stream()
+            .map(cs -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", cs.getId()); // ID de ClienteServicio
+                map.put("nombre", cs.getServicio().getNombre());
+                map.put("precio", cs.getPrecio() != null ? cs.getPrecio() : cs.getServicio().getPrecio());
+                return map;
+            })
+            .toList();
+    }
 
     // ==================== LISTADO Y FILTROS ====================
 
@@ -70,6 +98,7 @@ public class ControladorFactura {
         // 3. Cargar combos
         model.addAttribute("listaClientes", servicioCliente.obtenerClientesActivos()); 
         model.addAttribute("listaEstados", EstadoFactura.values());
+        model.addAttribute("listaServicios", servicioServicio.obtenerTodosLosServicios());
 
         // 4. Cargar datos
         model.addAttribute("facturasPage", facturasPage);
@@ -131,11 +160,52 @@ public class ControladorFactura {
     // ==================== PROCESOS (POST) ====================
 
     @PostMapping("/generar-individual")
-    public String procesarFacturacionIndividual(@RequestParam("clienteId") Long clienteId, 
-                                                RedirectAttributes redirectAttrs) {
+    public String procesarFacturacionIndividual(
+            @RequestParam("clienteId") Long clienteId,
+            @RequestParam(value = "tipoFacturacion", required = false, defaultValue = "mensual") String tipoFacturacion,
+            @RequestParam(value = "mesFacturacion", required = false) String mesFacturacionStr,
+            @RequestParam(value = "fechaEmision", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaEmision,
+            @RequestParam(value = "fechaInicio", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(value = "fechaFin", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(value = "serviciosIds", required = false) List<Long> serviciosIds,
+            RedirectAttributes redirectAttrs) {
         try {
-            Factura factura = servicioFacturacion.ejecutarFacturacionIndividual(clienteId);
-            redirectAttrs.addFlashAttribute("exito", "Factura generada correctamente. N°: " + factura.getId());
+            Factura factura;
+            
+            if (fechaEmision == null) {
+                fechaEmision = LocalDate.now();
+            }
+
+            if ("rango".equals(tipoFacturacion) && fechaInicio != null && fechaFin != null) {
+                // Facturación con rango personalizado
+                factura = servicioFacturacion.ejecutarFacturacionIndividualConRango(
+                    clienteId, fechaEmision, fechaInicio, fechaFin, false, serviciosIds
+                );
+                redirectAttrs.addFlashAttribute("exito", 
+                    String.format("Factura generada correctamente. N°: %d (Período: %s a %s)", 
+                                 factura.getId(), fechaInicio, fechaFin));
+            } else {
+                // Facturación mensual (automática o seleccionada)
+                YearMonth mesFacturado;
+                if (mesFacturacionStr != null && !mesFacturacionStr.isEmpty()) {
+                    mesFacturado = YearMonth.parse(mesFacturacionStr);
+                } else {
+                    // Default: mes anterior
+                    mesFacturado = YearMonth.from(LocalDate.now()).minusMonths(1);
+                }
+                
+                LocalDate inicio = mesFacturado.atDay(1);
+                LocalDate fin = mesFacturado.atEndOfMonth();
+
+                factura = servicioFacturacion.ejecutarFacturacionIndividualConRango(
+                    clienteId, fechaEmision, inicio, fin, false, serviciosIds
+                );
+                
+                redirectAttrs.addFlashAttribute("exito", 
+                    String.format("Factura generada correctamente. N°: %d (Período: %s)", 
+                                 factura.getId(), mesFacturado));
+            }
+            
             return "redirect:/facturas/ver/" + factura.getId();
         } catch (IllegalArgumentException ex) {
             redirectAttrs.addFlashAttribute("error", "No se pudo facturar: " + ex.getMessage());
@@ -149,18 +219,68 @@ public class ControladorFactura {
 
     @PostMapping("/generar-masiva")
     public String procesarFacturacionMasiva(
-            @RequestParam("fechaInicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
-            @RequestParam("fechaFin") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin,
+            @RequestParam(value = "tipoFacturacion", required = false, defaultValue = "mensual") String tipoFacturacion,
+            @RequestParam(value = "mesFacturacion", required = false) String mesFacturacionStr,
+            @RequestParam(value = "fechaEmision", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaEmision,
+            @RequestParam(value = "fechaInicio", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(value = "fechaFin", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(value = "serviciosIds", required = false) List<Long> serviciosIds,
             RedirectAttributes redirectAttrs) {
         try {
-            int cantidad = servicioFacturacion.ejecutarFacturacionMasiva(inicio, fin);
-            if (cantidad > 0) {
-                redirectAttrs.addFlashAttribute("exito", "Proceso masivo finalizado. Se generaron " + cantidad + " facturas.");
-            } else {
-                redirectAttrs.addFlashAttribute("info", "El proceso finalizó sin generar facturas.");
+            ResultadoFacturacionMasiva resultado;
+            
+            if (fechaEmision == null) {
+                fechaEmision = LocalDate.now();
             }
+
+            if ("rango".equals(tipoFacturacion) && fechaInicio != null && fechaFin != null) {
+                // Facturación con rango personalizado
+                resultado = servicioFacturacion.ejecutarFacturacionMasivaConRango(
+                    fechaEmision, fechaInicio, fechaFin, serviciosIds
+                );
+            } else {
+                // Facturación mensual (automática o seleccionada)
+                YearMonth mesFacturado;
+                if (mesFacturacionStr != null && !mesFacturacionStr.isEmpty()) {
+                    mesFacturado = YearMonth.parse(mesFacturacionStr);
+                } else {
+                    // Default: mes anterior
+                    mesFacturado = YearMonth.from(LocalDate.now()).minusMonths(1);
+                }
+                
+                LocalDate inicio = mesFacturado.atDay(1);
+                LocalDate fin = mesFacturado.atEndOfMonth();
+
+                resultado = servicioFacturacion.ejecutarFacturacionMasivaConRango(
+                    fechaEmision, inicio, fin, serviciosIds
+                );
+            }
+            
+            if (resultado.getExitosas() > 0) {
+                redirectAttrs.addFlashAttribute("exito", 
+                    String.format("Facturación masiva completada. " +
+                                "Exitosas: %d | Fallidas: %d | Omitidas: %d | " +
+                                "Total facturado: $%.2f", 
+                                resultado.getExitosas(), 
+                                resultado.getFallidas(),
+                                resultado.getOmitidas(),
+                                resultado.getMontoTotalFacturado()));
+            } else {
+                redirectAttrs.addFlashAttribute("info", 
+                    String.format("El proceso finalizó sin generar facturas. " +
+                                "Fallidas: %d | Omitidas: %d", 
+                                resultado.getFallidas(),
+                                resultado.getOmitidas()));
+            }
+            
+            // Opcional: guardar detalles para mostrar después
+            // redirectAttrs.addFlashAttribute("detalles", resultado.getDetalles());
+            
+        } catch (IllegalArgumentException ex) {
+            redirectAttrs.addFlashAttribute("error", "Validación AFIP: " + ex.getMessage());
         } catch (Exception ex) {
-            redirectAttrs.addFlashAttribute("error", "Error: " + ex.getMessage());
+            logger.error("Error en facturación masiva", ex);
+            redirectAttrs.addFlashAttribute("error", "Error inesperado: " + ex.getMessage());
         }
         return "redirect:/facturas/listar";
     }

@@ -1,11 +1,17 @@
 package com.example.facturacion.modelo;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,11 +19,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.ManyToOne;
-// Validation for cliente/servicio is handled in the service layer; avoid JSR-380 @NotNull here
-import java.time.LocalDate;
-import jakarta.persistence.PrePersist;
 
 @Entity
 @Table(name = "cliente_servicio")
@@ -43,6 +44,19 @@ public class ClienteServicio {
     @Column(name = "activo", nullable = false)
     @Builder.Default
     private boolean activo = true;
+
+    /**
+     * Precio personalizado para este cliente (si es null, usa el precio del servicio).
+     */
+    @Column(name = "precio", precision = 19, scale = 2)
+    private BigDecimal precio;
+
+    /**
+     * Obtiene el precio aplicable (personalizado o del servicio).
+     */
+    public BigDecimal getPrecio() {
+        return precio != null ? precio : (servicio != null ? servicio.getPrecio() : BigDecimal.ZERO);
+    }
 
     @PrePersist
     protected void onCreate() {

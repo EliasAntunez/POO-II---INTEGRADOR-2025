@@ -7,12 +7,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.example.facturacion.modelo.Cliente;
 import com.example.facturacion.modelo.ClienteServicio;
 
 @Repository
 public interface RepositorioClienteServicio extends JpaRepository<ClienteServicio, Long> {
 
 	List<ClienteServicio> findByActivoTrue();
+    
+    List<ClienteServicio> findByClienteAndActivoTrue(Cliente cliente);
 
 	/**
 	 * Obtiene una página de asignaciones cliente-servicio activas.

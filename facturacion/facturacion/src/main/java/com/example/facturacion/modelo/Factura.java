@@ -49,6 +49,14 @@ public class Factura {
     @Column(name = "fecha_vencimiento", nullable = false)
     private LocalDate fechaVencimiento; 
 
+    // NUEVO: Período facturado (Desde)
+    @Column(name = "fecha_inicio_periodo")
+    private LocalDate fechaInicioPeriodo;
+
+    // NUEVO: Período facturado (Hasta)
+    @Column(name = "fecha_fin_periodo")
+    private LocalDate fechaFinPeriodo;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_comprobante", nullable = false)
     private TipoComprobante tipoComprobante;
