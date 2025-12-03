@@ -51,6 +51,10 @@ public class ClienteServicio {
     @Column(name = "precio", precision = 19, scale = 2)
     private BigDecimal precio;
 
+    @Column(name = "esta_facturado")
+    @Builder.Default
+    private boolean estaFacturado = false;
+
     /**
      * Obtiene el precio aplicable (personalizado o del servicio).
      */
@@ -63,6 +67,10 @@ public class ClienteServicio {
         if (fechaAsignacion == null) {
             fechaAsignacion = LocalDate.now();
         }
+    }
+    
+    public void cambiarEstadoFacturado(boolean estaFacturado) {
+        this.estaFacturado = estaFacturado;
     }
 
     // -----------------
