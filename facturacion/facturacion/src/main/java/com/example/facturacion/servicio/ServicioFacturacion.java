@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -40,7 +39,7 @@ public class ServicioFacturacion {
     private static final int BATCH_SIZE = 50;
     // Plazos AFIP Argentina
     private static final int DIAS_RETROACTIVO_SERVICIOS = 10;
-    private static final int DIAS_RETROACTIVO_BIENES = 5;
+    
     // Mantenemos esta constante para la lógica de determinación de período automático
     private static final int DIAS_CIERRE_MES = 10; 
 
@@ -365,7 +364,15 @@ public class ServicioFacturacion {
             LocalDate fechaEmision,
             LocalDate periodoInicio,
             LocalDate periodoFin) {
-        
+        // Validación: ningún ClienteServicio debe estar ya marcado como facturado
+        List<Long> serviciosYaFacturados = servicios.stream()
+            .filter(ClienteServicio::isEstaFacturado)
+            .map(ClienteServicio::getId)
+            .toList();
+        if (!serviciosYaFacturados.isEmpty()) {
+            throw new IllegalArgumentException("No se puede generar la factura: los siguientes ClienteServicio ya están facturados: " + serviciosYaFacturados);
+        }
+
         Factura factura = new Factura();
         factura.setCliente(cliente);
         
@@ -391,7 +398,7 @@ public class ServicioFacturacion {
         
         // Agregar detalles de servicios
         BigDecimal totalFactura = BigDecimal.ZERO;
-        List<DetalleFactura> detalles = new ArrayList<>();
+        
         
         for (ClienteServicio cs : servicios) {
             Servicio servicio = cs.getServicio();
@@ -429,6 +436,17 @@ public class ServicioFacturacion {
         );
         
         servicioCliente.registrarMovimiento(cliente.getId(), movimiento);
+        
+        // Marcar los servicios del cliente como facturados y persistir los cambios
+        try {
+            for (ClienteServicio cs : servicios) {
+                cs.cambiarEstadoFacturado(true);
+            }
+            repositorioClienteServicio.saveAll(servicios);
+        } catch (Exception e) {
+            log.error("Error al marcar ClienteServicio como facturado para la factura {}: {}", facturaGuardada.getId(), e.getMessage(), e);
+            throw new IllegalStateException("Fallo al persistir estado de ClienteServicio tras generar factura", e);
+        }
         
         return facturaGuardada;
     }
@@ -592,8 +610,18 @@ public class ServicioFacturacion {
      * 
      * @deprecated Usar generarFacturaConFechaEmision para cumplir normativa AFIP
      */
+    @SuppressWarnings("unused")
     @Deprecated
     private Factura generarFacturaParaCliente(Cliente cliente, List<ClienteServicio> servicios) {
+        // Validación (legacy): impedir facturar servicios que ya fueron marcados como facturados
+        List<Long> serviciosYaFacturados = servicios.stream()
+            .filter(ClienteServicio::isEstaFacturado)
+            .map(ClienteServicio::getId)
+            .toList();
+        if (!serviciosYaFacturados.isEmpty()) {
+            throw new IllegalArgumentException("No se puede generar la factura (legacy): los siguientes ClienteServicio ya están facturados: " + serviciosYaFacturados);
+        }
+
         Factura factura = new Factura();
         factura.setCliente(cliente);
         factura.setFechaEmision(LocalDateTime.now());
@@ -638,6 +666,17 @@ public class ServicioFacturacion {
         movimiento.setDescripcion("Factura " + factura.getTipoComprobante().getLetra() + " N° " + factura.getId());
         
         servicioCliente.registrarMovimiento(cliente.getId(), movimiento);
+
+        // Marcar los servicios como facturados (legacy)
+        try {
+            for (ClienteServicio cs : servicios) {
+                cs.cambiarEstadoFacturado(true);
+            }
+            repositorioClienteServicio.saveAll(servicios);
+        } catch (Exception e) {
+            log.error("Error al marcar ClienteServicio como facturado (legacy) para la factura {}: {}", factura.getId(), e.getMessage(), e);
+            throw new IllegalStateException("Fallo al persistir estado de ClienteServicio (legacy) tras generar factura", e);
+        }
 
         return factura;
     }
